@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, Menu, clipboard } from 'electron'
+import { app, BrowserWindow, screen, shell, ipcMain, Menu, clipboard } from 'electron'
 import { join } from 'path'
 import Store from 'electron-store'
 import { registerPtyIpc, killAllPty, detachPtysForWindow } from './pty/pty-ipc'
@@ -34,6 +34,9 @@ let mainWindow: BrowserWindow | null = null
 
 /** Track whether a window is the main window (main windows close normally) */
 const secondaryWindows = new Set<BrowserWindow>()
+
+/** Store pre-focus-mode bounds so we can restore when exiting focus mode */
+const preFocusBounds = new Map<BrowserWindow, Electron.Rectangle>()
 
 function setupWindow(win: BrowserWindow, isSecondary = false): void {
   if (isSecondary) secondaryWindows.add(win)
@@ -198,6 +201,35 @@ function registerGlobalIpc(): void {
 
   ipcMain.on('window:close', (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close()
+  })
+
+  // Focus mode — resize window to mobile-like dimensions or restore
+  ipcMain.on('window:set-focus-mode', (event, enabled: boolean) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+
+    if (enabled) {
+      // Save current bounds before resizing
+      preFocusBounds.set(win, win.getBounds())
+      // If maximized, unmaximize first so setBounds works
+      if (win.isMaximized()) win.unmaximize()
+      // Mobile-like: 420px wide, 760px tall, centered on current display
+      const workArea = screen.getDisplayMatching(win.getBounds()).workArea
+      const focusW = 420
+      const focusH = 760
+      const x = workArea.x + Math.round((workArea.width - focusW) / 2)
+      const y = workArea.y + Math.round((workArea.height - focusH) / 2)
+      win.setMinimumSize(360, 500)
+      win.setBounds({ x, y, width: focusW, height: focusH })
+    } else {
+      // Restore previous bounds
+      const saved = preFocusBounds.get(win)
+      win.setMinimumSize(800, 500)
+      if (saved) {
+        win.setBounds(saved)
+        preFocusBounds.delete(win)
+      }
+    }
   })
 
   // Open a new window with a specific project pre-selected

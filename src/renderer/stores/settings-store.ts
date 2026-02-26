@@ -86,6 +86,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   },
 
   toggleMinifiedView: () => {
-    set((state) => ({ minifiedView: !state.minifiedView }))
+    set((state) => {
+      const next = !state.minifiedView
+      api.windowSetFocusMode(next)
+      return { minifiedView: next }
+    })
   }
 }))

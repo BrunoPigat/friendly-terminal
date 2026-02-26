@@ -22,6 +22,7 @@ export default function AppShell() {
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
   const minifiedView = useSettingsStore((s) => s.minifiedView)
+  const toggleMinifiedView = useSettingsStore((s) => s.toggleMinifiedView)
 
   const setRightPanelWidth = useSettingsStore((s) => s.setRightPanelWidth)
 
@@ -214,8 +215,27 @@ export default function AppShell() {
 
         {/* Main content area */}
         <main className="flex flex-1 flex-col overflow-hidden">
-          <TerminalToolbar />
-          {!minifiedView && <TerminalTabs />}
+          {minifiedView ? (
+            <div className="flex h-10 shrink-0 items-center justify-end border-b border-win-border bg-win-surface px-2">
+              <button
+                onClick={toggleMinifiedView}
+                title="Exit focus mode"
+                className="flex items-center justify-center h-8 w-8 rounded-md border border-win-accent bg-win-accent-subtle text-win-accent"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 3 21 3 21 9" />
+                  <polyline points="9 21 3 21 3 15" />
+                  <line x1="21" y1="3" x2="14" y2="10" />
+                  <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <>
+              <TerminalToolbar />
+              <TerminalTabs />
+            </>
+          )}
           <div className="relative flex-1 overflow-hidden">
             {activeTerminal ? (
               <TerminalInstance
