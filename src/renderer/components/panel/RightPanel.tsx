@@ -8,7 +8,7 @@ const TABS: { id: RightPanelTab; label: string }[] = [
   { id: 'tips', label: 'Suggestions' },
   { id: 'agents', label: 'Agents' },
   { id: 'skills', label: 'Skills' },
-  { id: 'mcps', label: 'Integrations' }
+  { id: 'mcps', label: 'Connections' }
 ]
 
 export default function RightPanel() {
@@ -23,12 +23,12 @@ export default function RightPanel() {
     >
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Tab bar - Windows 11 style */}
-        <div className="flex shrink-0 border-b border-win-border bg-win-surface">
+        <div className="flex shrink-0 overflow-x-auto border-b border-win-border bg-win-surface scrollbar-none">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative flex-1 px-4 py-3.5 text-sm font-medium transition-colors ${
+              className={`relative shrink-0 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === tab.id
                   ? 'text-win-accent'
                   : 'text-win-text-secondary hover:text-win-text'

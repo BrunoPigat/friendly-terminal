@@ -25,9 +25,10 @@ interface TerminalState {
 }
 
 let nextId = 1
+const windowUid = Math.random().toString(36).slice(2, 8)
 
 export function generateTerminalId(): string {
-  return `term-${nextId++}`
+  return `term-${windowUid}-${nextId++}`
 }
 
 let storeUpdateCount = 0

@@ -1,13 +1,19 @@
-import { useCallback } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { APP_NAME } from '@/lib/constants'
 import * as api from '@/lib/api'
 import { useProjectStore } from '@/stores/project-store'
 import { useTerminalStore } from '@/stores/terminal-store'
+import type { Project } from '@/lib/api'
+import logoImg from '../../../../resources/logo.png'
 
 export default function TitleBar() {
   const activeProject = useProjectStore((s) => s.activeProject)
   const clearProject = useProjectStore((s) => s.clearProject)
   const clearTerminals = useTerminalStore((s) => s.clearAll)
+
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const handleBack = useCallback(() => {
     clearTerminals()
@@ -17,6 +23,30 @@ export default function TitleBar() {
   const handleMinimize = useCallback(() => api.windowMinimize(), [])
   const handleMaximize = useCallback(() => api.windowMaximize(), [])
   const handleClose = useCallback(() => api.windowClose(), [])
+
+  // Fetch projects when dropdown opens
+  useEffect(() => {
+    if (showProjectDropdown) {
+      api.listProjects().then(setProjects).catch(() => setProjects([]))
+    }
+  }, [showProjectDropdown])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!showProjectDropdown) return
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowProjectDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showProjectDropdown])
+
+  const handleOpenProject = useCallback((projectName: string) => {
+    setShowProjectDropdown(false)
+    api.openProjectWindow(projectName)
+  }, [])
 
   return (
     <header
@@ -37,20 +67,57 @@ export default function TitleBar() {
           </button>
         )}
         {/* App icon */}
-        <div className="flex h-5 w-5 items-center justify-center rounded-md bg-win-accent text-white" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-        </div>
+        <img src={logoImg} alt="" className="h-6 w-6 rounded-md object-contain" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties} />
         <span className="font-semibold text-win-text" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>{APP_NAME}</span>
         {activeProject && (
           <>
             <span className="text-win-text-tertiary">/</span>
             <span className="text-win-text-secondary font-medium">{activeProject.name}</span>
-            <span className="text-win-text-tertiary truncate max-w-[300px] text-xs" title={activeProject.path}>
-              {activeProject.path}
-            </span>
           </>
+        )}
+
+        {/* Project switcher dropdown */}
+        {activeProject && (
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowProjectDropdown((v) => !v)}
+              className="flex items-center justify-center h-6 w-6 rounded-md text-win-text-tertiary hover:text-win-text hover:bg-win-hover transition-colors"
+              title="Switch project in new window"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {showProjectDropdown && (
+              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-lg border border-win-border bg-win-card shadow-lg py-1">
+                <div className="px-3 py-2 text-[11px] font-medium text-win-text-tertiary uppercase tracking-wider">
+                  Open in new window
+                </div>
+                {projects.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-win-text-tertiary">No projects</div>
+                ) : (
+                  projects
+                    .filter((p) => p.name !== activeProject.name)
+                    .map((project) => (
+                      <button
+                        key={project.name}
+                        onClick={() => handleOpenProject(project.name)}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text transition-colors text-left"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-win-text-tertiary">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span className="truncate">{project.name}</span>
+                      </button>
+                    ))
+                )}
+                {projects.filter((p) => p.name !== activeProject.name).length === 0 && projects.length > 0 && (
+                  <div className="px-3 py-2 text-sm text-win-text-tertiary">No other projects</div>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

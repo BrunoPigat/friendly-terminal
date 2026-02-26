@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain, Menu, clipboard } from 'electron'
 import { join } from 'path'
 import Store from 'electron-store'
-import { registerPtyIpc, killAllPty } from './pty/pty-ipc'
+import { registerPtyIpc, killAllPty, detachPtysForWindow } from './pty/pty-ipc'
 import { registerFsIpc, closeAllWatchers } from './filesystem/fs-ipc'
 import { registerProjectIpc } from './project/project-ipc'
 import { detectEngines, getAvailableEngines } from './ai-engines/engine-registry'
@@ -32,13 +32,73 @@ process.on('unhandledRejection', (reason) => {
 
 let mainWindow: BrowserWindow | null = null
 
-function createWindow(): void {
-  mainWindow = new BrowserWindow({
+/** Track whether a window is the main window (main windows close normally) */
+const secondaryWindows = new Set<BrowserWindow>()
+
+function setupWindow(win: BrowserWindow, isSecondary = false): void {
+  if (isSecondary) secondaryWindows.add(win)
+
+  // Intercept Ctrl+V before Chromium handles it — send clipboard text to renderer
+  win.webContents.on('before-input-event', (event, input) => {
+    if (win.isDestroyed()) return
+    if (input.control && input.key.toLowerCase() === 'v' && input.type === 'keyDown') {
+      const text = clipboard.readText()
+      if (text) {
+        win.webContents.send('clipboard:paste', text)
+        event.preventDefault()
+      }
+    }
+  })
+
+  // Show window maximized once ready to avoid visual flash
+  win.on('ready-to-show', () => {
+    win.maximize()
+    win.show()
+  })
+
+  // Open external links in the system browser
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https:') || url.startsWith('http:')) {
+      shell.openExternal(url)
+    }
+    return { action: 'deny' }
+  })
+
+  // For secondary windows: prevent native close crash on Windows.
+  // Intercept close, detach PTYs, hide window, then destroy on next tick.
+  if (isSecondary) {
+    win.on('close', (e) => {
+      if (!win.isDestroyed() && win.isVisible()) {
+        e.preventDefault()
+        console.log('[window] secondary close — detaching PTYs and hiding')
+        detachPtysForWindow(win)
+        win.hide()
+        // Navigate away to release renderer resources, then destroy
+        win.webContents.loadURL('about:blank').finally(() => {
+          if (!win.isDestroyed()) {
+            secondaryWindows.delete(win)
+            win.destroy()
+          }
+        })
+      }
+    })
+  } else {
+    win.on('close', () => {
+      console.log('[window] main close — detaching PTYs')
+      detachPtysForWindow(win)
+    })
+  }
+}
+
+function createBrowserWindow(): BrowserWindow {
+  return new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
     minHeight: 500,
     show: false,
+    frame: false,
+    icon: join(__dirname, '../../resources/icon.png'),
     title: 'Your Friendly Terminal',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -47,30 +107,11 @@ function createWindow(): void {
       sandbox: false
     }
   })
+}
 
-  // Intercept Ctrl+V before Chromium handles it — send clipboard text to renderer
-  mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.control && input.key.toLowerCase() === 'v' && input.type === 'keyDown') {
-      const text = clipboard.readText()
-      if (text) {
-        mainWindow?.webContents.send('clipboard:paste', text)
-        event.preventDefault()
-      }
-    }
-  })
-
-  // Show window once ready to avoid visual flash
-  mainWindow.on('ready-to-show', () => {
-    mainWindow?.show()
-  })
-
-  // Open external links in the system browser
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https:') || url.startsWith('http:')) {
-      shell.openExternal(url)
-    }
-    return { action: 'deny' }
-  })
+function createWindow(): void {
+  mainWindow = createBrowserWindow()
+  setupWindow(mainWindow)
 
   // Load the renderer
   const isDev = !app.isPackaged
@@ -78,6 +119,20 @@ function createWindow(): void {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+}
+
+function createProjectWindow(projectName: string): void {
+  const win = createBrowserWindow()
+  setupWindow(win, true)
+
+  const isDev = !app.isPackaged
+  if (isDev && process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}?project=${encodeURIComponent(projectName)}`)
+  } else {
+    win.loadFile(join(__dirname, '../renderer/index.html'), {
+      query: { project: projectName }
+    })
   }
 }
 
@@ -127,21 +182,27 @@ function registerGlobalIpc(): void {
     settingsStore.set(key, value)
   })
 
-  // Window controls
-  ipcMain.on('window:minimize', () => {
-    mainWindow?.minimize()
+  // Window controls — use event.sender to target the correct window
+  ipcMain.on('window:minimize', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize()
   })
 
-  ipcMain.on('window:maximize', () => {
-    if (mainWindow?.isMaximized()) {
-      mainWindow.unmaximize()
+  ipcMain.on('window:maximize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win?.isMaximized()) {
+      win.unmaximize()
     } else {
-      mainWindow?.maximize()
+      win?.maximize()
     }
   })
 
-  ipcMain.on('window:close', () => {
-    mainWindow?.close()
+  ipcMain.on('window:close', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close()
+  })
+
+  // Open a new window with a specific project pre-selected
+  ipcMain.on('window:open-project', (_event, projectName: string) => {
+    createProjectWindow(projectName)
   })
 }
 
@@ -187,6 +248,9 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+  // Double-check there are truly no windows left (safety guard for multi-window)
+  if (BrowserWindow.getAllWindows().length > 0) return
+
   // Kill all PTY processes, close watchers, and stop GUI server before quitting
   killAllPty()
   closeAllWatchers()

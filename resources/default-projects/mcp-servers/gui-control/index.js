@@ -137,6 +137,35 @@ async function main() {
             type: 'object',
             properties: {}
           }
+        },
+        {
+          name: 'add_connection',
+          description:
+            'Add a new MCP connection to the current project in Your Friendly Terminal. Supports SSE/remote (proxied via mcp-remote) and stdio/local connections. After adding, the Connections tab is auto-selected and the list refreshes.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Unique name for the connection (e.g. "my-api", "github-mcp")'
+              },
+              type: {
+                type: 'string',
+                enum: ['sse', 'stdio'],
+                description: 'Connection type: "sse" for remote SSE/HTTP servers (URL will be proxied via mcp-remote), "stdio" for local command-based servers'
+              },
+              url: {
+                type: 'string',
+                description: 'For SSE type: the server URL (e.g. "https://api.example.com/mcp/sse"). For stdio type: the command to run (e.g. "npx -y @modelcontextprotocol/server-filesystem")'
+              },
+              headers: {
+                type: 'object',
+                additionalProperties: { type: 'string' },
+                description: 'Optional key-value headers (for SSE) or environment variables (for stdio). Example: {"Authorization": "Bearer token123"}'
+              }
+            },
+            required: ['name', 'type', 'url']
+          }
         }
       ]
     }
@@ -186,6 +215,40 @@ async function main() {
       case 'close_panel':
         action = { action: 'close_panel' }
         break
+
+      case 'add_connection': {
+        const connName = args?.name
+        const connType = args?.type
+        const connUrl = args?.url
+        const connHeaders = args?.headers || {}
+
+        if (!connName || typeof connName !== 'string') {
+          return {
+            content: [{ type: 'text', text: 'Error: "name" is required and must be a string' }],
+            isError: true
+          }
+        }
+        if (!connType || !['sse', 'stdio'].includes(connType)) {
+          return {
+            content: [{ type: 'text', text: `Error: Invalid type "${connType}". Must be "sse" or "stdio"` }],
+            isError: true
+          }
+        }
+        if (!connUrl || typeof connUrl !== 'string') {
+          return {
+            content: [{ type: 'text', text: 'Error: "url" is required and must be a string' }],
+            isError: true
+          }
+        }
+        action = {
+          action: 'add_connection',
+          name: connName,
+          type: connType,
+          url: connUrl,
+          headers: connHeaders
+        }
+        break
+      }
 
       default:
         return {

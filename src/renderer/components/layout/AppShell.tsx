@@ -21,6 +21,7 @@ export default function AppShell() {
   const setSidebarWidth = useSettingsStore((s) => s.setSidebarWidth)
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
+  const minifiedView = useSettingsStore((s) => s.minifiedView)
 
   const setRightPanelWidth = useSettingsStore((s) => s.setRightPanelWidth)
 
@@ -28,6 +29,8 @@ export default function AppShell() {
   useGuiActions()
 
   const activeProject = useProjectStore((s) => s.activeProject)
+  const selectProject = useProjectStore((s) => s.selectProject)
+  const loadProjects = useProjectStore((s) => s.loadProjects)
 
   const activeTerminalId = useTerminalStore((s) => s.activeTerminalId)
   const terminals = useTerminalStore((s) => s.terminals)
@@ -40,6 +43,21 @@ export default function AppShell() {
   useEffect(() => {
     loadSettings()
   }, [loadSettings])
+
+  // Auto-select project from URL query param (?project=name)
+  const autoSelectedRef = useRef(false)
+  useEffect(() => {
+    if (autoSelectedRef.current || activeProject) return
+    const params = new URLSearchParams(window.location.search)
+    const projectName = params.get('project')
+    if (!projectName) return
+    autoSelectedRef.current = true
+    loadProjects().then(() => {
+      const projects = useProjectStore.getState().projects
+      const match = projects.find((p) => p.name === projectName)
+      if (match) selectProject(match)
+    })
+  }, [activeProject, loadProjects, selectProject])
 
   // Track previous dependency values to see what's changing
   const prevDepsRef = useRef<{
@@ -180,12 +198,14 @@ export default function AppShell() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <Sidebar>
-          <FileBrowser />
-        </Sidebar>
+        {!minifiedView && (
+          <Sidebar>
+            <FileBrowser />
+          </Sidebar>
+        )}
 
         {/* Resize handle */}
-        {!sidebarCollapsed && (
+        {!minifiedView && !sidebarCollapsed && (
           <div
             className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
             onMouseDown={handleResizeStart}
@@ -195,7 +215,7 @@ export default function AppShell() {
         {/* Main content area */}
         <main className="flex flex-1 flex-col overflow-hidden">
           <TerminalToolbar />
-          <TerminalTabs />
+          {!minifiedView && <TerminalTabs />}
           <div className="relative flex-1 overflow-hidden">
             {activeTerminal ? (
               <TerminalInstance
@@ -212,13 +232,15 @@ export default function AppShell() {
         </main>
 
         {/* Right panel resize handle */}
-        <div
-          className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
-          onMouseDown={handleRightResizeStart}
-        />
+        {!minifiedView && (
+          <div
+            className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
+            onMouseDown={handleRightResizeStart}
+          />
+        )}
 
         {/* Right panel */}
-        <RightPanel />
+        {!minifiedView && <RightPanel />}
       </div>
     </div>
   )

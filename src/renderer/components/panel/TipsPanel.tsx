@@ -34,21 +34,16 @@ function ChatBubble({
   const handleSend = useCallback(() => {
     if (!activeTerminalId) return
     const plainText = stripMarkdown(content)
-    api.ptyWrite(activeTerminalId, plainText + '\n')
+      .replace(/\r?\n/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+    api.ptyWrite(activeTerminalId, plainText + '\r')
   }, [activeTerminalId, content])
 
   return (
-    <div className="flex gap-2 items-end" style={{ animationDelay: `${index * 80}ms` }}>
-      {/* Avatar */}
-      <div className="flex-shrink-0 w-8 h-8 rounded-md bg-win-accent-subtle flex items-center justify-center mb-0.5">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-win-accent">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="16" x2="12" y2="12" />
-          <line x1="12" y1="8" x2="12.01" y2="8" />
-        </svg>
-      </div>
+    <div className="flex flex-col gap-1.5" style={{ animationDelay: `${index * 80}ms` }}>
       {/* Bubble */}
-      <div className="group relative max-w-[85%] rounded-lg rounded-bl-sm bg-win-accent-subtle border border-win-accent/15 px-5 py-3.5">
+      <div className="rounded-lg bg-win-accent-subtle border border-win-accent/15 px-5 py-3.5">
         <div className="prose prose-sm max-w-none
           prose-p:text-sm prose-p:leading-relaxed prose-p:text-win-text prose-p:m-0
           prose-a:text-win-accent prose-a:no-underline hover:prose-a:underline
@@ -60,20 +55,21 @@ function ChatBubble({
           prose-em:text-win-text-secondary">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         </div>
-        {activeTerminalId && (
-          <button
-            onClick={handleSend}
-            title="Send to chat"
-            className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity
-              p-1 rounded-md text-win-text-tertiary hover:text-win-accent hover:bg-win-hover"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
-        )}
       </div>
+      {/* Send to chat button */}
+      {activeTerminalId && (
+        <button
+          onClick={handleSend}
+          className="self-start flex items-center gap-1.5 rounded-md border border-win-border bg-win-card px-3 py-1.5
+            text-xs font-medium text-win-text-secondary hover:bg-win-accent hover:text-white hover:border-win-accent transition-colors cursor-pointer"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Send to chat
+        </button>
+      )}
     </div>
   )
 }

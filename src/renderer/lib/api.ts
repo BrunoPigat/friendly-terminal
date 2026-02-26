@@ -89,6 +89,7 @@ interface IElectronAPI {
   windowMinimize: () => void
   windowMaximize: () => void
   windowClose: () => void
+  openProjectWindow: (projectName: string) => void
 }
 
 function getApi(): IElectronAPI {
@@ -121,6 +122,10 @@ export const getProjectsDir = () => getApi().getProjectsDir()
 
 // MCP
 export const listMcpServers = (projectName: string) => getApi().listMcpServers(projectName)
+export const addMcpServer = (projectName: string, name: string, server: McpServer) =>
+  getApi().addMcpServer(projectName, name, server)
+export const removeMcpServer = (projectName: string, name: string) =>
+  getApi().removeMcpServer(projectName, name)
 
 // AI Engines
 export const listEngines = () => getApi().listEngines()
@@ -146,3 +151,4 @@ export const setSetting = (key: string, value: unknown) => getApi().setSetting(k
 export const windowMinimize = () => getApi().windowMinimize()
 export const windowMaximize = () => getApi().windowMaximize()
 export const windowClose = () => getApi().windowClose()
+export const openProjectWindow = (projectName: string) => getApi().openProjectWindow(projectName)

@@ -3,33 +3,56 @@ import { PtyManager, PtySpawnOptions } from './pty-manager'
 
 const ptyManager = new PtyManager()
 
+/** Map pty id → the BrowserWindow that owns it, so events route to the right window */
+const ptyOwners = new Map<string, BrowserWindow>()
+
 /**
  * Registers all PTY-related IPC handlers.
- * Data and exit events are pushed to the renderer via webContents.send.
+ * Call once. Uses event.sender to route data back to the originating window.
  */
-export function registerPtyIpc(mainWindow: BrowserWindow): void {
+export function registerPtyIpc(_mainWindow: BrowserWindow): void {
+  // Guard against double-registration (second window)
+  if ((registerPtyIpc as { _registered?: boolean })._registered) return
+  ;(registerPtyIpc as { _registered?: boolean })._registered = true
+
   ipcMain.handle(
     'pty:spawn',
     async (
-      _event,
+      event,
       id: string,
       options: PtySpawnOptions
     ): Promise<{ success: boolean; error?: string }> => {
       try {
         console.log(`[pty:spawn] id="${id}" shell="${options?.shell || 'default'}" cwd="${options?.cwd || 'default'}"`)
+
+        // Find the BrowserWindow that sent this request
+        const senderWindow = BrowserWindow.fromWebContents(event.sender)
+        if (senderWindow) ptyOwners.set(id, senderWindow)
+
         ptyManager.spawn(
           id,
           options,
           (data: string) => {
-            if (!mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('pty:data', id, data)
+            try {
+              const win = ptyOwners.get(id)
+              if (win && !win.isDestroyed()) {
+                win.webContents.send('pty:data', id, data)
+              }
+            } catch {
+              // Window may have been destroyed between the check and the send
             }
           },
           (exitCode: number, signal?: number) => {
             console.log(`[pty:exit] id="${id}" exitCode=${exitCode} signal=${signal}`)
-            if (!mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('pty:exit', id, exitCode, signal)
+            try {
+              const win = ptyOwners.get(id)
+              if (win && !win.isDestroyed()) {
+                win.webContents.send('pty:exit', id, exitCode, signal)
+              }
+            } catch {
+              // Window may have been destroyed between the check and the send
             }
+            ptyOwners.delete(id)
           }
         )
         return { success: true }
@@ -55,6 +78,7 @@ export function registerPtyIpc(mainWindow: BrowserWindow): void {
     async (_event, id: string): Promise<void> => {
       console.log(`[pty:kill] id="${id}"`)
       ptyManager.kill(id)
+      ptyOwners.delete(id)
     }
   )
 }
@@ -64,4 +88,25 @@ export function registerPtyIpc(mainWindow: BrowserWindow): void {
  */
 export function killAllPty(): void {
   ptyManager.killAll()
+}
+
+/**
+ * Detaches PTY processes owned by a specific window so their callbacks
+ * no longer try to send to that window's webContents.
+ * Does NOT kill the PTY processes — they'll be killed on app quit.
+ * This avoids native ConPTY crashes on Windows during window close.
+ */
+export function detachPtysForWindow(win: BrowserWindow): void {
+  const idsToDetach: string[] = []
+  for (const [id, owner] of ptyOwners) {
+    if (owner === win) {
+      idsToDetach.push(id)
+    }
+  }
+  console.log(`[pty-ipc] detachPtysForWindow: detaching ${idsToDetach.length} PTYs: ${idsToDetach.join(', ')}`)
+  for (const id of idsToDetach) {
+    ptyOwners.delete(id)
+    // Null out the callbacks in PtyManager so native events are no-ops
+    ptyManager.detach(id)
+  }
 }

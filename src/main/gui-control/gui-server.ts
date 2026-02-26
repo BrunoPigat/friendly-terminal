@@ -10,9 +10,15 @@ let portFilePath: string | null = null
 const VALID_TABS = ['tips', 'agents', 'skills', 'mcps'] as const
 type Tab = (typeof VALID_TABS)[number]
 
+const VALID_CONNECTION_TYPES = ['sse', 'stdio'] as const
+
 interface GuiAction {
-  action: 'switch_tab' | 'open_panel' | 'close_panel'
+  action: 'switch_tab' | 'open_panel' | 'close_panel' | 'add_connection'
   tab?: string
+  name?: string
+  type?: string
+  url?: string
+  headers?: Record<string, string>
 }
 
 function getPortFilePath(): string {
@@ -94,6 +100,26 @@ function handleAction(
 
     case 'close_panel': {
       mainWindow.webContents.send('gui:action', { action: 'close_panel' })
+      return { success: true }
+    }
+
+    case 'add_connection': {
+      if (!data.name || typeof data.name !== 'string' || !data.name.trim()) {
+        return { success: false, error: 'Connection name is required' }
+      }
+      if (!data.type || !VALID_CONNECTION_TYPES.includes(data.type as (typeof VALID_CONNECTION_TYPES)[number])) {
+        return { success: false, error: `Invalid type "${data.type}". Must be one of: ${VALID_CONNECTION_TYPES.join(', ')}` }
+      }
+      if (!data.url || typeof data.url !== 'string' || !data.url.trim()) {
+        return { success: false, error: 'URL/command is required' }
+      }
+      mainWindow.webContents.send('gui:action', {
+        action: 'add_connection',
+        name: data.name.trim(),
+        type: data.type,
+        url: data.url.trim(),
+        headers: data.headers || {}
+      })
       return { success: true }
     }
 

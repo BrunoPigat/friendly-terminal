@@ -11,6 +11,7 @@ interface SettingsState {
   sidebarCollapsed: boolean
   rightPanelWidth: number
   rightPanelActiveTab: RightPanelTab
+  minifiedView: boolean
   loaded: boolean
 
   loadSettings: () => Promise<void>
@@ -19,6 +20,7 @@ interface SettingsState {
   toggleSidebar: () => void
   setRightPanelWidth: (width: number) => void
   setRightPanelActiveTab: (tab: RightPanelTab) => void
+  toggleMinifiedView: () => void
 }
 
 interface SettingsData {
@@ -32,8 +34,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   defaultEngine: 'claude',
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
   sidebarCollapsed: false,
-  rightPanelWidth: 280,
+  rightPanelWidth: 340,
   rightPanelActiveTab: 'tips',
+  minifiedView: false,
   loaded: false,
 
   loadSettings: async () => {
@@ -48,7 +51,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
         defaultEngine: (defaultEngine as EngineId) ?? 'claude',
         sidebarWidth: (sidebarWidth as number) ?? DEFAULT_SIDEBAR_WIDTH,
         sidebarCollapsed: (sidebarCollapsed as boolean) ?? false,
-        rightPanelWidth: (rightPanelWidth as number) ?? 280,
+        rightPanelWidth: (rightPanelWidth as number) ?? 340,
         loaded: true
       })
     } catch (err) {
@@ -80,5 +83,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
   setRightPanelActiveTab: (tab) => {
     set({ rightPanelActiveTab: tab })
+  },
+
+  toggleMinifiedView: () => {
+    set((state) => ({ minifiedView: !state.minifiedView }))
   }
 }))

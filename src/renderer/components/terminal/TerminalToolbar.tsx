@@ -1,15 +1,146 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { useTerminalStore, generateTerminalId } from '@/stores/terminal-store'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
 import * as api from '@/lib/api'
 import ClearSessionDialog from './ClearSessionDialog'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+
+/**
+ * Modal that displays the engine's memory file (CLAUDE.md or GEMINI.md).
+ */
+function MemoryModal({
+  projectPath,
+  engine,
+  onClose
+}: {
+  projectPath: string
+  engine: EngineId
+  onClose: () => void
+}) {
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const [content, setContent] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const fileName = engine === 'claude' ? 'CLAUDE.md' : 'GEMINI.md'
+
+  useEffect(() => {
+    const filePath = `${projectPath}/${fileName}`
+    api.readFile(filePath)
+      .then((text) => {
+        setContent(text)
+        setLoading(false)
+      })
+      .catch(() => {
+        setContent(null)
+        setLoading(false)
+      })
+  }, [projectPath, fileName])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  const handleOverlayClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === overlayRef.current) onClose()
+    },
+    [onClose]
+  )
+
+  return (
+    <div
+      ref={overlayRef}
+      onClick={handleOverlayClick}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+    >
+      <div className="w-full max-w-2xl max-h-[80vh] rounded-lg border border-win-border bg-win-card flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-win-border shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-win-accent-subtle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-win-accent">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-win-text">Project Memory</h2>
+              <p className="text-xs text-win-text-tertiary">{fileName}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-win-text-tertiary hover:bg-win-hover hover:text-win-text transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <line x1="1" y1="1" x2="13" y2="13" />
+              <line x1="13" y1="1" x2="1" y2="13" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {loading ? (
+            <div className="flex items-center gap-3 text-sm text-win-text-tertiary">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-win-border border-t-win-accent" />
+              Loading memory file...
+            </div>
+          ) : content === null || content.trim() === '' ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-win-text-tertiary">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              <p className="text-sm text-win-text-secondary">No memory file found</p>
+              <p className="text-xs text-win-text-tertiary">
+                The AI assistant will create <code className="rounded bg-win-hover px-1.5 py-0.5 border border-win-border">{fileName}</code> as it learns about your project.
+              </p>
+            </div>
+          ) : (
+            <div className="prose prose-sm max-w-none
+              prose-headings:text-win-text prose-headings:font-semibold
+              prose-h1:text-lg prose-h1:mb-3 prose-h1:mt-0
+              prose-h2:text-base prose-h2:mb-2 prose-h2:mt-5
+              prose-h3:text-sm prose-h3:mb-1.5 prose-h3:mt-4
+              prose-p:text-sm prose-p:leading-relaxed prose-p:text-win-text-secondary prose-p:mb-2
+              prose-a:text-win-accent prose-a:no-underline hover:prose-a:underline
+              prose-code:text-xs prose-code:bg-win-hover prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-win-accent-dark prose-code:font-mono prose-code:border prose-code:border-win-border
+              prose-pre:bg-win-bg prose-pre:border prose-pre:border-win-border prose-pre:rounded-lg prose-pre:text-xs prose-pre:p-4
+              prose-ul:text-sm prose-ul:text-win-text-secondary prose-ol:text-sm prose-ol:text-win-text-secondary
+              prose-li:text-sm prose-li:text-win-text-secondary prose-li:my-0.5
+              prose-strong:text-win-text
+              prose-em:text-win-text-secondary
+              prose-hr:border-win-border">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end px-6 py-4 border-t border-win-border shrink-0">
+          <button
+            onClick={onClose}
+            className="rounded-md bg-win-accent px-5 py-2 text-sm font-medium text-white hover:bg-win-accent-dark transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 /**
  * Toolbar above the terminal area.
- * Contains: AI engine selector, session action buttons (New, Continue, Clear, Compact),
- * and current working directory display.
+ * Contains: AI engine selector, session action buttons, and project memory.
  */
 export default function TerminalToolbar() {
   const terminals = useTerminalStore((s) => s.terminals)
@@ -19,11 +150,15 @@ export default function TerminalToolbar() {
   const activeProject = useProjectStore((s) => s.activeProject)
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
 
+  const minifiedView = useSettingsStore((s) => s.minifiedView)
+  const toggleMinifiedView = useSettingsStore((s) => s.toggleMinifiedView)
+
   const activeTerminal = activeTerminalId ? terminals.get(activeTerminalId) : undefined
   const currentEngine = activeTerminal?.engine ?? defaultEngine
 
   const [selectedEngine, setSelectedEngine] = useState<EngineId>(defaultEngine)
   const [showClearDialog, setShowClearDialog] = useState(false)
+  const [showMemory, setShowMemory] = useState(false)
 
   const handleEngineChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -182,25 +317,47 @@ export default function TerminalToolbar() {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Current working directory */}
-        {activeTerminal?.cwd && (
-          <div className="flex items-center gap-1.5 text-sm text-win-text-tertiary truncate max-w-[300px]">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="shrink-0"
-            >
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        {/* Project Memory button */}
+        {activeProject && (
+          <button
+            onClick={() => setShowMemory(true)}
+            title="View project memory file"
+            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
             </svg>
-            <span className="truncate">{activeTerminal.cwd}</span>
-          </div>
+            Project Memory
+          </button>
         )}
+
+        {/* Minified view toggle */}
+        <button
+          onClick={toggleMinifiedView}
+          title={minifiedView ? 'Exit focus mode' : 'Focus mode — hide sidebar and panels'}
+          className={`flex items-center justify-center h-8 w-8 rounded-md border transition-colors ${
+            minifiedView
+              ? 'border-win-accent bg-win-accent-subtle text-win-accent'
+              : 'border-win-border bg-win-card text-win-text-secondary hover:bg-win-hover hover:text-win-text'
+          }`}
+        >
+          {minifiedView ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="4 14 10 14 10 20" />
+              <polyline points="20 10 14 10 14 4" />
+              <line x1="14" y1="10" x2="21" y2="3" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Clear session confirmation dialog */}
@@ -210,6 +367,15 @@ export default function TerminalToolbar() {
           onClose={() => setShowClearDialog(false)}
           onClear={handleClear}
           onSaveAndClear={handleSaveAndClear}
+        />
+      )}
+
+      {/* Memory modal */}
+      {showMemory && activeProject && (
+        <MemoryModal
+          projectPath={activeProject.path}
+          engine={currentEngine}
+          onClose={() => setShowMemory(false)}
         />
       )}
     </>

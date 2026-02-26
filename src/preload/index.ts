@@ -74,6 +74,7 @@ const api: IElectronAPI = {
   windowMinimize: () => ipcRenderer.send('window:minimize'),
   windowMaximize: () => ipcRenderer.send('window:maximize'),
   windowClose: () => ipcRenderer.send('window:close'),
+  openProjectWindow: (projectName) => ipcRenderer.send('window:open-project', projectName),
 }
 
 contextBridge.exposeInMainWorld('api', api)

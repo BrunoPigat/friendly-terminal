@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
 
 /*
  * Windows 11-inspired light theme.
@@ -107,6 +108,11 @@ body {
   --color-win-text-tertiary: #8C8C8C;
   --color-win-hover: #F5F5F5;
   --color-win-pressed: #EBEBEB;
+}
+
+/* Hide scrollbar but keep scrolling */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* xterm.js container should fill its parent */

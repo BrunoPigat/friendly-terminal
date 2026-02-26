@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import { APP_NAME } from '@/lib/constants'
 import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
+import SetupBanner from '@/components/SetupBanner'
+import logoImg from '../../../resources/logo.png'
 
 export default function WelcomeScreen() {
   const projects = useProjectStore((s) => s.projects)
@@ -46,19 +48,15 @@ export default function WelcomeScreen() {
       <div className="w-full max-w-2xl px-8">
         {/* Header */}
         <div className="mb-12 text-center">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-win-accent">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none" />
-              <circle cx="12" cy="10" r="1" fill="currentColor" stroke="none" />
-              <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none" />
-            </svg>
-          </div>
+          <img src={logoImg} alt="App logo" className="mx-auto mb-6 h-24 w-24 rounded-2xl object-contain" />
           <h1 className="text-3xl font-semibold text-win-text">{APP_NAME}</h1>
           <p className="mt-3 text-base text-win-text-secondary">
             {projects.length > 0 ? 'Pick a project to start chatting with your AI assistant' : 'Create your first project to get started'}
           </p>
         </div>
+
+        {/* Engine setup banner */}
+        <SetupBanner />
 
         {/* Project list */}
         <div className="mb-6">

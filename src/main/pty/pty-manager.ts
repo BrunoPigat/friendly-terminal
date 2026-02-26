@@ -125,6 +125,18 @@ export class PtyManager {
   }
 
   /**
+   * Detaches callbacks from a PTY without killing it.
+   * The PTY process keeps running but its events become no-ops.
+   */
+  detach(id: string): void {
+    const instance = this.instances.get(id)
+    if (!instance) return
+    console.log(`[PtyManager] detaching PTY "${id}" (process stays alive)`)
+    instance.onDataCallback = null
+    instance.onExitCallback = null
+  }
+
+  /**
    * Returns whether a PTY instance with the given id exists.
    */
   has(id: string): boolean {

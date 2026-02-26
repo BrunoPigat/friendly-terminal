@@ -26,9 +26,19 @@ export async function readDirectory(dirPath: string): Promise<DirectoryEntry[]> 
     throw err
   }
 
+  const HIDDEN_ENTRIES = new Set([
+    '.claude',
+    '.gemini',
+    '.mcp.json',
+    'tips.md',
+    'CLAUDE.md',
+    'GEMINI.md'
+  ])
+
   const results: DirectoryEntry[] = []
 
   for (const name of entries) {
+    if (HIDDEN_ENTRIES.has(name)) continue
     const fullPath = join(dirPath, name)
     try {
       const info = await stat(fullPath)

@@ -7,10 +7,18 @@ import { readDirectory } from './tree-service'
 
 const watchers = new Map<string, FSWatcher>()
 
+/** Map watched dirPath → the BrowserWindow that requested the watch */
+const watchOwners = new Map<string, BrowserWindow>()
+
 /**
  * Registers all filesystem-related IPC handlers.
+ * Call once. Uses event.sender to route watch events to the correct window.
  */
-export function registerFsIpc(mainWindow: BrowserWindow): void {
+export function registerFsIpc(_mainWindow: BrowserWindow): void {
+  // Guard against double-registration (second window)
+  if ((registerFsIpc as { _registered?: boolean })._registered) return
+  ;(registerFsIpc as { _registered?: boolean })._registered = true
+
   ipcMain.handle('fs:list-disks', async () => {
     console.log('[fs:list-disks] listing drives')
     return listDisks()
@@ -64,21 +72,30 @@ export function registerFsIpc(mainWindow: BrowserWindow): void {
 
   // ---- Filesystem watcher ---------------------------------------------------
 
-  ipcMain.handle('fs:watch', async (_event, dirPath: string) => {
+  ipcMain.handle('fs:watch', async (event, dirPath: string) => {
     // Already watching this path
     if (watchers.has(dirPath)) return
+
+    // Track which window requested this watch
+    const senderWindow = BrowserWindow.fromWebContents(event.sender)
+    if (senderWindow) watchOwners.set(dirPath, senderWindow)
 
     try {
       let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-      const watcher = watch(dirPath, { recursive: true }, (eventType, filename) => {
+      const watcher = watch(dirPath, { recursive: true }, (_eventType, filename) => {
         // Debounce: batch rapid changes into a single notification
         if (debounceTimer) clearTimeout(debounceTimer)
         debounceTimer = setTimeout(() => {
-          if (!mainWindow.isDestroyed()) {
-            // Send the directory that changed so the renderer knows what to reload
-            const changedDir = filename ? dirname(`${dirPath}/${filename}`) : dirPath
-            mainWindow.webContents.send('fs:changed', dirPath, changedDir)
+          try {
+            const win = watchOwners.get(dirPath)
+            if (win && !win.isDestroyed()) {
+              // Send the directory that changed so the renderer knows what to reload
+              const changedDir = filename ? dirname(`${dirPath}/${filename}`) : dirPath
+              win.webContents.send('fs:changed', dirPath, changedDir)
+            }
+          } catch {
+            // Window may have been destroyed between check and send
           }
         }, 300)
       })
@@ -86,6 +103,7 @@ export function registerFsIpc(mainWindow: BrowserWindow): void {
       watcher.on('error', (err) => {
         console.warn(`[fs:watch] watcher error for "${dirPath}": ${err.message}`)
         watchers.delete(dirPath)
+        watchOwners.delete(dirPath)
       })
 
       watchers.set(dirPath, watcher)
@@ -100,6 +118,7 @@ export function registerFsIpc(mainWindow: BrowserWindow): void {
     if (watcher) {
       watcher.close()
       watchers.delete(dirPath)
+      watchOwners.delete(dirPath)
       console.log(`[fs:unwatch] stopped watching "${dirPath}"`)
     }
   })

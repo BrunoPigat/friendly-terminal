@@ -112,4 +112,5 @@ export interface IElectronAPI {
   windowMinimize: () => void
   windowMaximize: () => void
   windowClose: () => void
+  openProjectWindow: (projectName: string) => void
 }
