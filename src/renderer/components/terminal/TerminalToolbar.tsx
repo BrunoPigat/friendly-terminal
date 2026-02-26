@@ -3,10 +3,17 @@ import { useTerminalStore, generateTerminalId } from '@/stores/terminal-store'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
+import type { AIEngineInfo } from '@/preload/types'
 import * as api from '@/lib/api'
 import ClearSessionDialog from './ClearSessionDialog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+
+/** Install URLs for each engine */
+const ENGINE_INSTALL_URLS: Record<EngineId, string> = {
+  claude: 'https://docs.anthropic.com/en/docs/claude-code/overview',
+  gemini: 'https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#-installation'
+}
 
 /**
  * Modal that displays the engine's memory file (CLAUDE.md or GEMINI.md).
@@ -146,7 +153,6 @@ export default function TerminalToolbar() {
   const terminals = useTerminalStore((s) => s.terminals)
   const activeTerminalId = useTerminalStore((s) => s.activeTerminalId)
   const addTerminal = useTerminalStore((s) => s.addTerminal)
-  const updateTerminal = useTerminalStore((s) => s.updateTerminal)
   const activeProject = useProjectStore((s) => s.activeProject)
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
 
@@ -159,16 +165,51 @@ export default function TerminalToolbar() {
   const [selectedEngine, setSelectedEngine] = useState<EngineId>(defaultEngine)
   const [showClearDialog, setShowClearDialog] = useState(false)
   const [showMemory, setShowMemory] = useState(false)
+  const [engines, setEngines] = useState<AIEngineInfo[]>([])
+  const [engineDropdownOpen, setEngineDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Detect installed engines on mount
+  useEffect(() => {
+    api.detectEngines().then(setEngines)
+  }, [])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!engineDropdownOpen) return
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setEngineDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [engineDropdownOpen])
+
+  const atMaxTerminals = terminals.size >= 4
 
   const handleEngineChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const engine = e.target.value as EngineId
+    (engine: EngineId) => {
       setSelectedEngine(engine)
-      if (activeTerminalId) {
-        updateTerminal(activeTerminalId, { engine })
-      }
+      setEngineDropdownOpen(false)
+
+      // If already at max, don't create a new terminal
+      if (atMaxTerminals) return
+
+      // Create a new terminal with the selected engine
+      const id = generateTerminalId()
+      const count = terminals.size + 1
+      addTerminal({
+        id,
+        ptyId: null,
+        name: `${ENGINE_NAMES[engine]} #${count}`,
+        engine,
+        isActive: true,
+        cwd: activeProject?.path ?? '',
+        isLoading: true
+      })
     },
-    [activeTerminalId, updateTerminal]
+    [addTerminal, terminals.size, activeProject, atMaxTerminals]
   )
 
   const handleNewSession = useCallback(() => {
@@ -235,29 +276,86 @@ export default function TerminalToolbar() {
     <>
       <div className="flex h-12 shrink-0 items-center gap-3 border-b border-win-border bg-win-surface px-4">
         {/* AI assistant selector */}
-        <div className="flex items-center gap-2">
-          <label htmlFor="engine-select" className="text-sm font-medium text-win-text-secondary">
+        <div className="relative flex items-center gap-2" ref={dropdownRef}>
+          <label className="text-sm font-medium text-win-text-secondary">
             Assistant
           </label>
-          <select
-            id="engine-select"
-            value={selectedEngine}
-            onChange={handleEngineChange}
-            className="rounded-md border border-win-border bg-win-card px-3 py-2 text-sm text-win-text outline-none focus:border-win-accent transition-colors cursor-pointer"
+          <button
+            onClick={() => setEngineDropdownOpen((v) => !v)}
+            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-3 py-2 text-sm text-win-text hover:bg-win-hover transition-colors cursor-pointer"
           >
-            {(Object.entries(ENGINE_NAMES) as [EngineId, string][]).map(([key, name]) => (
-              <option key={key} value={key}>
-                {name}
-              </option>
-            ))}
-          </select>
+            <span className={`h-2 w-2 rounded-full ${selectedEngine === 'claude' ? 'bg-orange-400' : 'bg-blue-400'}`} />
+            {ENGINE_NAMES[selectedEngine]}
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-win-text-tertiary">
+              <path d="M2 4l3 3 3-3" />
+            </svg>
+          </button>
+
+          {engineDropdownOpen && (
+            <div className="absolute left-0 top-full mt-1 z-50 min-w-[200px] rounded-lg border border-win-border bg-win-card shadow-lg overflow-hidden">
+              {(Object.entries(ENGINE_NAMES) as [EngineId, string][]).map(([key, name]) => {
+                const info = engines.find((e) => e.id === key)
+                const isInstalled = info?.isAvailable ?? false
+                const isCurrent = key === selectedEngine
+
+                if (isInstalled) {
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleEngineChange(key)}
+                      disabled={atMaxTerminals && !isCurrent}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+                        isCurrent
+                          ? 'bg-win-accent-subtle text-win-accent font-medium'
+                          : 'text-win-text hover:bg-win-hover disabled:opacity-40 disabled:cursor-not-allowed'
+                      }`}
+                    >
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${key === 'claude' ? 'bg-orange-400' : 'bg-blue-400'}`} />
+                      <span className="flex-1 text-left">{name}</span>
+                      {isCurrent && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                      {atMaxTerminals && !isCurrent && (
+                        <span className="text-[10px] text-win-text-tertiary">4/4</span>
+                      )}
+                    </button>
+                  )
+                }
+
+                return (
+                  <div
+                    key={key}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-win-text-tertiary"
+                  >
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-neutral-300" />
+                    <span className="flex-1 text-left">{name}</span>
+                    <a
+                      href={ENGINE_INSTALL_URLS[key]}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEngineDropdownOpen(false)
+                      }}
+                      className="text-xs font-medium text-win-accent hover:underline"
+                    >
+                      Install
+                    </a>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleNewSession}
-            className="flex items-center gap-2 rounded-md bg-win-accent px-5 py-2 text-sm font-medium text-white hover:bg-win-accent-dark transition-colors"
+            disabled={terminals.size >= 4}
+            className="flex items-center gap-2 rounded-md bg-win-accent px-5 py-2 text-sm font-medium text-white hover:bg-win-accent-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />

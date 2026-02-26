@@ -90,7 +90,6 @@ interface IElectronAPI {
   windowMaximize: () => void
   windowClose: () => void
   windowSetFocusMode: (enabled: boolean) => void
-  openProjectWindow: (projectName: string) => void
 }
 
 function getApi(): IElectronAPI {
@@ -153,4 +152,3 @@ export const windowMinimize = () => getApi().windowMinimize()
 export const windowMaximize = () => getApi().windowMaximize()
 export const windowClose = () => getApi().windowClose()
 export const windowSetFocusMode = (enabled: boolean) => getApi().windowSetFocusMode(enabled)
-export const openProjectWindow = (projectName: string) => getApi().openProjectWindow(projectName)

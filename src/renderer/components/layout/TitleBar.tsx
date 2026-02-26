@@ -2,23 +2,34 @@ import { useCallback, useState, useEffect, useRef } from 'react'
 import { APP_NAME } from '@/lib/constants'
 import * as api from '@/lib/api'
 import { useProjectStore } from '@/stores/project-store'
-import { useTerminalStore } from '@/stores/terminal-store'
+import { useSplitViewStore } from '@/stores/split-view-store'
+import { useSettingsStore } from '@/stores/settings-store'
 import type { Project } from '@/lib/api'
 import logoImg from '../../../../resources/logo.png'
 
 export default function TitleBar() {
+  const panels = useSplitViewStore((s) => s.panels)
+  const activatePanel = useSplitViewStore((s) => s.activatePanel)
+  const closePanel = useSplitViewStore((s) => s.closePanel)
   const activeProject = useProjectStore((s) => s.activeProject)
   const clearProject = useProjectStore((s) => s.clearProject)
-  const clearTerminals = useTerminalStore((s) => s.clearAll)
+  const selectProject = useProjectStore((s) => s.selectProject)
+  const defaultEngine = useSettingsStore((s) => s.defaultEngine)
 
   const [showProjectDropdown, setShowProjectDropdown] = useState(false)
   const [projects, setProjects] = useState<Project[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const handleBack = useCallback(() => {
-    clearTerminals()
-    clearProject()
-  }, [clearProject, clearTerminals])
+    if (panels.length > 1) {
+      // Close active panel, next one becomes active
+      const activePanel = panels[panels.length - 1]
+      closePanel(activePanel.panelId)
+    } else {
+      // Last panel — go to welcome screen
+      clearProject()
+    }
+  }, [panels, closePanel, clearProject])
 
   const handleMinimize = useCallback(() => api.windowMinimize(), [])
   const handleMaximize = useCallback(() => api.windowMaximize(), [])
@@ -43,23 +54,29 @@ export default function TitleBar() {
     return () => document.removeEventListener('mousedown', handler)
   }, [showProjectDropdown])
 
-  const handleOpenProject = useCallback((projectName: string) => {
-    setShowProjectDropdown(false)
-    api.openProjectWindow(projectName)
-  }, [])
+  const handleOpenProject = useCallback(
+    (project: Project) => {
+      setShowProjectDropdown(false)
+      selectProject(project, defaultEngine)
+    },
+    [selectProject, defaultEngine]
+  )
+
+  // Get names of projects already open in panels
+  const openProjectNames = new Set(panels.map((p) => p.project.name))
 
   return (
     <header
       className="flex h-10 shrink-0 items-center justify-between border-b border-win-border bg-win-surface px-3 select-none"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      {/* Left: back + app name + project */}
+      {/* Left: back + app name + breadcrumb */}
       <div className="flex items-center gap-2 text-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-        {activeProject && (
+        {panels.length > 0 && (
           <button
             onClick={handleBack}
             className="flex items-center justify-center h-6 w-6 rounded-md text-win-text-secondary hover:text-win-text hover:bg-win-hover transition-colors"
-            title="Back to projects"
+            title={panels.length > 1 ? 'Close active project' : 'Back to projects'}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
@@ -69,20 +86,36 @@ export default function TitleBar() {
         {/* App icon */}
         <img src={logoImg} alt="" className="h-6 w-6 rounded-md object-contain" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties} />
         <span className="font-semibold text-win-text" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>{APP_NAME}</span>
-        {activeProject && (
-          <>
-            <span className="text-win-text-tertiary">/</span>
-            <span className="text-win-text-secondary font-medium">{activeProject.name}</span>
-          </>
-        )}
+
+        {/* Breadcrumb: show all open projects */}
+        {panels.map((panel, idx) => {
+          const isActive = idx === panels.length - 1
+          return (
+            <span key={panel.panelId} className="flex items-center gap-2">
+              <span className="text-win-text-tertiary">/</span>
+              <button
+                onClick={() => {
+                  if (!isActive) activatePanel(panel.panelId)
+                }}
+                className={`transition-colors ${
+                  isActive
+                    ? 'font-semibold text-win-text cursor-default'
+                    : 'text-win-text-secondary hover:text-win-text cursor-pointer'
+                }`}
+              >
+                {panel.project.name}
+              </button>
+            </span>
+          )
+        })}
 
         {/* Project switcher dropdown */}
-        {activeProject && (
+        {panels.length > 0 && (
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowProjectDropdown((v) => !v)}
               className="flex items-center justify-center h-6 w-6 rounded-md text-win-text-tertiary hover:text-win-text hover:bg-win-hover transition-colors"
-              title="Switch project in new window"
+              title="Open project"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9" />
@@ -92,17 +125,17 @@ export default function TitleBar() {
             {showProjectDropdown && (
               <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-lg border border-win-border bg-win-card shadow-lg py-1">
                 <div className="px-3 py-2 text-[11px] font-medium text-win-text-tertiary uppercase tracking-wider">
-                  Open in new window
+                  Open project
                 </div>
                 {projects.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-win-text-tertiary">No projects</div>
                 ) : (
                   projects
-                    .filter((p) => p.name !== activeProject.name)
+                    .filter((p) => !openProjectNames.has(p.name))
                     .map((project) => (
                       <button
                         key={project.name}
-                        onClick={() => handleOpenProject(project.name)}
+                        onClick={() => handleOpenProject(project)}
                         className="flex w-full items-center gap-2 px-3 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text transition-colors text-left"
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-win-text-tertiary">
@@ -112,8 +145,8 @@ export default function TitleBar() {
                       </button>
                     ))
                 )}
-                {projects.filter((p) => p.name !== activeProject.name).length === 0 && projects.length > 0 && (
-                  <div className="px-3 py-2 text-sm text-win-text-tertiary">No other projects</div>
+                {projects.filter((p) => !openProjectNames.has(p.name)).length === 0 && projects.length > 0 && (
+                  <div className="px-3 py-2 text-sm text-win-text-tertiary">All projects are open</div>
                 )}
               </div>
             )}

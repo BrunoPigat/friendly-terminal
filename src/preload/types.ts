@@ -113,5 +113,4 @@ export interface IElectronAPI {
   windowMaximize: () => void
   windowClose: () => void
   windowSetFocusMode: (enabled: boolean) => void
-  openProjectWindow: (projectName: string) => void
 }

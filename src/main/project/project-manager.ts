@@ -174,14 +174,16 @@ async function createDefaultPermissions(projectDir: string): Promise<void> {
       currentAllow.push(guiPattern)
     }
 
-    // Allow editing tips.md in the project root
-    const tipsEditPattern = 'Edit(tips.md)'
-    const tipsWritePattern = 'Write(tips.md)'
-    if (!currentAllow.includes(tipsEditPattern)) {
-      currentAllow.push(tipsEditPattern)
-    }
-    if (!currentAllow.includes(tipsWritePattern)) {
-      currentAllow.push(tipsWritePattern)
+    // Allow all tools to modify tips.md in the project root
+    const tipsPatterns = [
+      'Edit(tips.md)',
+      'Write(tips.md)',
+      'Bash(*tips.md*)'
+    ]
+    for (const pattern of tipsPatterns) {
+      if (!currentAllow.includes(pattern)) {
+        currentAllow.push(pattern)
+      }
     }
 
     existing.permissions = { ...permissions, allow: currentAllow }

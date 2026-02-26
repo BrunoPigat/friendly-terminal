@@ -32,15 +32,10 @@ process.on('unhandledRejection', (reason) => {
 
 let mainWindow: BrowserWindow | null = null
 
-/** Track whether a window is the main window (main windows close normally) */
-const secondaryWindows = new Set<BrowserWindow>()
-
 /** Store pre-focus-mode bounds so we can restore when exiting focus mode */
 const preFocusBounds = new Map<BrowserWindow, Electron.Rectangle>()
 
-function setupWindow(win: BrowserWindow, isSecondary = false): void {
-  if (isSecondary) secondaryWindows.add(win)
-
+function setupWindow(win: BrowserWindow): void {
   // Intercept Ctrl+V before Chromium handles it — send clipboard text to renderer
   win.webContents.on('before-input-event', (event, input) => {
     if (win.isDestroyed()) return
@@ -67,30 +62,10 @@ function setupWindow(win: BrowserWindow, isSecondary = false): void {
     return { action: 'deny' }
   })
 
-  // For secondary windows: prevent native close crash on Windows.
-  // Intercept close, detach PTYs, hide window, then destroy on next tick.
-  if (isSecondary) {
-    win.on('close', (e) => {
-      if (!win.isDestroyed() && win.isVisible()) {
-        e.preventDefault()
-        console.log('[window] secondary close — detaching PTYs and hiding')
-        detachPtysForWindow(win)
-        win.hide()
-        // Navigate away to release renderer resources, then destroy
-        win.webContents.loadURL('about:blank').finally(() => {
-          if (!win.isDestroyed()) {
-            secondaryWindows.delete(win)
-            win.destroy()
-          }
-        })
-      }
-    })
-  } else {
-    win.on('close', () => {
-      console.log('[window] main close — detaching PTYs')
-      detachPtysForWindow(win)
-    })
-  }
+  win.on('close', () => {
+    console.log('[window] main close — detaching PTYs')
+    detachPtysForWindow(win)
+  })
 }
 
 function createBrowserWindow(): BrowserWindow {
@@ -122,20 +97,6 @@ function createWindow(): void {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
-  }
-}
-
-function createProjectWindow(projectName: string): void {
-  const win = createBrowserWindow()
-  setupWindow(win, true)
-
-  const isDev = !app.isPackaged
-  if (isDev && process.env['ELECTRON_RENDERER_URL']) {
-    win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}?project=${encodeURIComponent(projectName)}`)
-  } else {
-    win.loadFile(join(__dirname, '../renderer/index.html'), {
-      query: { project: projectName }
-    })
   }
 }
 
@@ -232,10 +193,6 @@ function registerGlobalIpc(): void {
     }
   })
 
-  // Open a new window with a specific project pre-selected
-  ipcMain.on('window:open-project', (_event, projectName: string) => {
-    createProjectWindow(projectName)
-  })
 }
 
 // --- App lifecycle ---

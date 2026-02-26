@@ -36,6 +36,7 @@ export default function SetupBanner() {
   const [engines, setEngines] = useState<EngineInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [installing, setInstalling] = useState<{ id: string; name: string } | null>(null)
+  const [showExplainer, setShowExplainer] = useState(false)
 
   const detect = useCallback(async () => {
     setLoading(true)
@@ -53,41 +54,65 @@ export default function SetupBanner() {
   }, [detect])
 
   const missingEngines = engines.filter((e) => !e.isAvailable)
+  const noneFound = missingEngines.length === engines.length && engines.length > 0
+
+  // When none are found, only suggest installing one engine (Claude as default)
+  const displayedEngines = noneFound
+    ? missingEngines.filter((e) => e.id === 'claude')
+    : missingEngines
 
   if (loading || missingEngines.length === 0) return null
 
   return (
     <>
-      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
-        <div className="mb-3 flex items-center gap-2">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <span className="text-sm font-semibold text-amber-800">
-            {missingEngines.length === engines.length
-              ? 'No AI engines installed'
-              : 'Some AI engines are missing'}
-          </span>
+      <div className="mb-6 rounded-lg border border-win-border bg-win-card px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-win-text-tertiary">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span className="text-xs text-win-text-secondary">
+              {noneFound
+                ? 'No AI engine found'
+                : `${missingEngines.map((e) => e.name).join(' and ')} not found`}
+            </span>
+            {!noneFound && (
+              <button
+                onClick={() => setShowExplainer((v) => !v)}
+                className="text-[11px] text-win-text-tertiary hover:text-win-text-secondary transition-colors"
+              >
+                {showExplainer ? 'Hide' : 'Why am I seeing this?'}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {displayedEngines.map((engine) => (
+              <button
+                key={engine.id}
+                onClick={() => setInstalling({ id: engine.id, name: engine.name })}
+                className="text-xs text-win-text-secondary hover:text-win-text underline underline-offset-2 transition-colors"
+              >
+                Install {engine.name}
+              </button>
+            ))}
+          </div>
         </div>
-        <p className="mb-4 text-sm text-amber-700">
-          Install an AI engine to start chatting. At least one is required.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {missingEngines.map((engine) => (
-            <button
-              key={engine.id}
-              onClick={() => setInstalling({ id: engine.id, name: engine.name })}
-              className="flex items-center gap-2.5 rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm font-medium text-amber-900 hover:bg-amber-100 transition-colors"
-            >
-              <span className="text-amber-600">
-                {ENGINE_ICONS[engine.id]}
-              </span>
-              Install {engine.name}
-            </button>
-          ))}
-        </div>
+
+        {(showExplainer || noneFound) && (
+          <div className="mt-3 border-t border-win-border pt-3 text-xs text-win-text-secondary leading-relaxed space-y-2">
+            <p>
+              Your Friendly Terminal needs at least one AI coding assistant installed on your system to work. These are command-line tools that run locally on your machine.
+            </p>
+            <p>
+              <strong className="text-win-text">Claude Code</strong> is Anthropic's CLI assistant and <strong className="text-win-text">Gemini CLI</strong> is Google's. You only need one, but you can install both to switch between them.
+            </p>
+            <p>
+              Click "Install" above for step-by-step instructions. After installing, restart the app and this message will go away.
+            </p>
+          </div>
+        )}
       </div>
 
       {installing && (

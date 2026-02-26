@@ -4,6 +4,7 @@ import { FitAddon } from '@xterm/addon-fit'
 import { WebglAddon } from '@xterm/addon-webgl'
 import { DEFAULT_TERMINAL_OPTIONS } from '@/lib/constants'
 import { useTerminalStore } from '@/stores/terminal-store'
+import { useSplitViewStore } from '@/stores/split-view-store'
 import * as api from '@/lib/api'
 
 import '@xterm/xterm/css/xterm.css'
@@ -38,6 +39,7 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
   const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const updateTerminal = useTerminalStore((s) => s.updateTerminal)
+  const setFocusedTerminalId = useSplitViewStore((s) => s.setFocusedTerminalId)
 
   const fit = useCallback(() => {
     const fitAddon = fitAddonRef.current
@@ -82,6 +84,12 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
     terminal.loadAddon(fitAddon)
 
     terminal.open(container)
+
+    // Track which terminal has focus for cross-panel clipboard paste routing
+    const focusHandler = () => {
+      useSplitViewStore.getState().setFocusedTerminalId(terminalId)
+    }
+    container.addEventListener('focusin', focusHandler)
 
     try {
       const webglAddon = new WebglAddon()
@@ -160,7 +168,10 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
 
         // Clipboard paste from main process (Ctrl+V intercepted via before-input-event)
         disposePasteRef.current = window.api.onClipboardPaste((text) => {
-          if (ptyReadyRef.current && terminalId === useTerminalStore.getState().activeTerminalId) {
+          // Use focusedTerminalId from split-view store for cross-panel paste routing
+          const focusedId = useSplitViewStore.getState().focusedTerminalId
+            ?? useTerminalStore.getState().activeTerminalId
+          if (ptyReadyRef.current && terminalId === focusedId) {
             api.ptyWrite(terminalId, text)
           }
         })
@@ -250,6 +261,7 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
       disposed = true
       ptyReadyRef.current = false
       resizeObserver.disconnect()
+      container.removeEventListener('focusin', focusHandler)
       disposeDataRef.current?.()
       disposeExitRef.current?.()
       disposePasteRef.current?.()

@@ -1,17 +1,11 @@
 import { create } from 'zustand'
-import type { EngineId } from '@/lib/constants'
+import { useSplitViewStore } from './split-view-store'
 
-export interface TerminalEntry {
-  id: string
-  /** PTY id returned from ptyCreate */
-  ptyId: string | null
-  name: string
-  engine: EngineId
-  isActive: boolean
-  cwd: string
-  /** Whether the terminal is still loading (engine starting) */
-  isLoading: boolean
-}
+// Re-export from shared types so existing imports keep working
+export { generateTerminalId } from './terminal-types'
+export type { TerminalEntry } from './terminal-types'
+
+import type { TerminalEntry } from './terminal-types'
 
 interface TerminalState {
   terminals: Map<string, TerminalEntry>
@@ -24,78 +18,65 @@ interface TerminalState {
   clearAll: () => void
 }
 
-let nextId = 1
-const windowUid = Math.random().toString(36).slice(2, 8)
-
-export function generateTerminalId(): string {
-  return `term-${windowUid}-${nextId++}`
-}
-
-let storeUpdateCount = 0
-
-export const useTerminalStore = create<TerminalState>((set) => ({
+/**
+ * Terminal store — now a facade over the active panel in split-view-store.
+ *
+ * All reads return the active panel's terminals.
+ * All writes delegate to the split-view store's per-panel methods.
+ * Existing consumers (TerminalToolbar, TerminalTabs, TerminalInstance, useTerminal)
+ * keep working unchanged.
+ */
+export const useTerminalStore = create<TerminalState>(() => ({
+  // Computed from active panel — kept in sync via subscription below
   terminals: new Map(),
   activeTerminalId: null,
 
-  addTerminal: (entry) =>
-    set((state) => {
-      storeUpdateCount++
-      console.log(`[TerminalStore] Update #${storeUpdateCount} - addTerminal called with:`, entry)
-      const next = new Map(state.terminals)
-      // Deactivate all others
-      for (const [key, t] of next) {
-        if (t.isActive) {
-          next.set(key, { ...t, isActive: false })
-        }
-      }
-      next.set(entry.id, { ...entry, isActive: true })
-      console.log('[TerminalStore] Terminal added, new size:', next.size, 'activeTerminalId:', entry.id)
-      return { terminals: next, activeTerminalId: entry.id }
-    }),
+  addTerminal: (entry) => {
+    const activePanel = useSplitViewStore.getState().getActivePanel()
+    if (!activePanel) {
+      console.warn('[TerminalStore] addTerminal: no active panel')
+      return
+    }
+    useSplitViewStore.getState().addTerminal(activePanel.panelId, entry)
+  },
 
-  removeTerminal: (id) =>
-    set((state) => {
-      const next = new Map(state.terminals)
-      next.delete(id)
+  removeTerminal: (id) => {
+    const panel = useSplitViewStore.getState().getPanelByTerminalId(id)
+    if (!panel) return
+    useSplitViewStore.getState().removeTerminal(panel.panelId, id)
+  },
 
-      let activeTerminalId = state.activeTerminalId
-      if (activeTerminalId === id) {
-        // Activate the last remaining tab, if any
-        const remaining = Array.from(next.keys())
-        activeTerminalId = remaining.length > 0 ? remaining[remaining.length - 1] : null
-        if (activeTerminalId) {
-          const t = next.get(activeTerminalId)!
-          next.set(activeTerminalId, { ...t, isActive: true })
-        }
-      }
-      return { terminals: next, activeTerminalId }
-    }),
+  setActive: (id) => {
+    const panel = useSplitViewStore.getState().getPanelByTerminalId(id)
+    if (!panel) return
+    useSplitViewStore.getState().setActiveTerminal(panel.panelId, id)
+  },
 
-  setActive: (id) =>
-    set((state) => {
-      storeUpdateCount++
-      console.log(`[TerminalStore] Update #${storeUpdateCount} - setActive called with:`, id)
-      const next = new Map(state.terminals)
-      for (const [key, t] of next) {
-        next.set(key, { ...t, isActive: key === id })
-      }
-      return { terminals: next, activeTerminalId: id }
-    }),
+  updateTerminal: (id, patch) => {
+    const panel = useSplitViewStore.getState().getPanelByTerminalId(id)
+    if (!panel) return
+    useSplitViewStore.getState().updateTerminal(panel.panelId, id, patch)
+  },
 
-  updateTerminal: (id, patch) =>
-    set((state) => {
-      const existing = state.terminals.get(id)
-      if (!existing) return state
-      storeUpdateCount++
-      console.log(`[TerminalStore] Update #${storeUpdateCount} - updateTerminal called with:`, id, patch)
-      const next = new Map(state.terminals)
-      next.set(id, { ...existing, ...patch })
-      return { terminals: next }
-    }),
-
-  clearAll: () =>
-    set(() => ({
-      terminals: new Map(),
-      activeTerminalId: null
-    }))
+  clearAll: () => {
+    const activePanel = useSplitViewStore.getState().getActivePanel()
+    if (!activePanel) return
+    useSplitViewStore.getState().clearPanelTerminals(activePanel.panelId)
+  }
 }))
+
+/**
+ * Subscribe to split-view-store changes and sync the active panel's terminals
+ * into terminal-store so that selectors like `useTerminalStore(s => s.terminals)` work.
+ */
+useSplitViewStore.subscribe((state) => {
+  const activePanel = state.panels.length > 0 ? state.panels[state.panels.length - 1] : undefined
+  const terminals = activePanel?.terminals ?? new Map()
+  const activeTerminalId = activePanel?.activeTerminalId ?? null
+
+  const current = useTerminalStore.getState()
+  // Only update if the reference actually changed to avoid infinite loops
+  if (current.terminals !== terminals || current.activeTerminalId !== activeTerminalId) {
+    useTerminalStore.setState({ terminals, activeTerminalId })
+  }
+})

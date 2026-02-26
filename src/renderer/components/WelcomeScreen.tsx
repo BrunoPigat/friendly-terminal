@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
+import { useSettingsStore } from '@/stores/settings-store'
 import { APP_NAME } from '@/lib/constants'
 import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
 import SetupBanner from '@/components/SetupBanner'
+import HelpDialog from '@/components/HelpDialog'
 import logoImg from '../../../resources/logo.png'
 
 export default function WelcomeScreen() {
@@ -11,11 +13,13 @@ export default function WelcomeScreen() {
   const loadProjects = useProjectStore((s) => s.loadProjects)
   const selectProject = useProjectStore((s) => s.selectProject)
   const createProject = useProjectStore((s) => s.createProject)
+  const defaultEngine = useSettingsStore((s) => s.defaultEngine)
 
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
     loadProjects()
@@ -26,7 +30,8 @@ export default function WelcomeScreen() {
     if (!trimmed) return
     setCreating(true)
     try {
-      await createProject(trimmed)
+      const project = await createProject(trimmed)
+      selectProject(project, defaultEngine)
     } catch (err) {
       console.error('[WelcomeScreen] Failed to create project:', err)
     }
@@ -34,6 +39,13 @@ export default function WelcomeScreen() {
     setNewName('')
     setShowCreate(false)
   }
+
+  const handleSelectProject = useCallback(
+    (project: { name: string; path: string; createdAt: string }) => {
+      selectProject(project, defaultEngine)
+    },
+    [selectProject, defaultEngine]
+  )
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleCreate()
@@ -54,6 +66,19 @@ export default function WelcomeScreen() {
             {projects.length > 0 ? 'Pick a project to start chatting with your AI assistant' : 'Create your first project to get started'}
           </p>
         </div>
+
+        {/* Help button */}
+        <button
+          onClick={() => setShowHelp(true)}
+          className="mb-6 flex w-full items-center gap-3 rounded-xl border border-win-accent/30 bg-win-accent-subtle px-5 py-4 text-left text-sm font-medium text-win-accent hover:bg-win-accent hover:text-white transition-all"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          How to use AI in the terminal — understand context, memory and organization
+        </button>
 
         {/* Engine setup banner */}
         <SetupBanner />
@@ -83,7 +108,7 @@ export default function WelcomeScreen() {
                   className="group flex items-center rounded-xl border border-win-border bg-win-card transition-all hover:bg-win-hover"
                 >
                   <button
-                    onClick={() => selectProject(project)}
+                    onClick={() => handleSelectProject(project)}
                     className="flex flex-1 items-center gap-4 px-5 py-5 text-left min-w-0"
                   >
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-win-accent-subtle text-win-accent group-hover:bg-win-accent group-hover:text-white transition-colors">
@@ -179,6 +204,9 @@ export default function WelcomeScreen() {
           onClose={() => setDeleteTarget(null)}
         />
       )}
+
+      {/* Help dialog */}
+      {showHelp && <HelpDialog onClose={() => setShowHelp(false)} />}
     </div>
   )
 }

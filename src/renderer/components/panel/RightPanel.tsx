@@ -23,7 +23,7 @@ export default function RightPanel() {
     >
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Tab bar - Windows 11 style */}
-        <div className="flex shrink-0 overflow-x-auto border-b border-win-border bg-win-surface scrollbar-none">
+        <div className="flex shrink-0 overflow-x-auto border-b border-win-border bg-win-surface">
           {TABS.map((tab) => (
             <button
               key={tab.id}

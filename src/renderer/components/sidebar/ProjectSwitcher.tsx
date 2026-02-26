@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useProjectStore } from '@/stores/project-store'
+import { useSettingsStore } from '@/stores/settings-store'
 import ProjectDialog from '@/components/project/ProjectDialog'
 import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
 
@@ -11,6 +12,7 @@ export default function ProjectSwitcher() {
   const projects = useProjectStore((s) => s.projects)
   const activeProject = useProjectStore((s) => s.activeProject)
   const selectProject = useProjectStore((s) => s.selectProject)
+  const defaultEngine = useSettingsStore((s) => s.defaultEngine)
 
   const [open, setOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -31,10 +33,10 @@ export default function ProjectSwitcher() {
 
   const handleSelect = useCallback(
     (project: typeof projects[number]) => {
-      selectProject(project)
+      selectProject(project, defaultEngine)
       setOpen(false)
     },
-    [selectProject]
+    [selectProject, defaultEngine]
   )
 
   const handleCreateNew = useCallback(() => {
