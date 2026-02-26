@@ -25,13 +25,12 @@ function getSkillsDir(projectDir: string): string {
 
 /**
  * Copies default skill files from the app resources into a project's
- * .claude/skills/ directory. Existing skills are not overwritten.
+ * skills directories. Copies to both .claude/skills/ and .gemini/skills/
+ * so skills are available regardless of which engine is used.
+ * Existing skills are not overwritten.
  */
 export async function copyDefaultSkills(projectDir: string): Promise<void> {
   const source = getDefaultSkillsSource()
-  const dest = getSkillsDir(projectDir)
-
-  await ensureDir(dest)
 
   let sourceEntries: string[]
   try {
@@ -41,13 +40,21 @@ export async function copyDefaultSkills(projectDir: string): Promise<void> {
     return
   }
 
-  for (const entry of sourceEntries) {
-    const srcPath = join(source, entry)
-    const destPath = join(dest, entry)
-    try {
-      await cp(srcPath, destPath, { recursive: true, force: false })
-    } catch {
-      // Skip files that already exist or cannot be copied
+  const destinations = [
+    getSkillsDir(projectDir),
+    join(projectDir, '.gemini', 'skills')
+  ]
+
+  for (const dest of destinations) {
+    await ensureDir(dest)
+    for (const entry of sourceEntries) {
+      const srcPath = join(source, entry)
+      const destPath = join(dest, entry)
+      try {
+        await cp(srcPath, destPath, { recursive: true, force: false })
+      } catch {
+        // Skip files that already exist or cannot be copied
+      }
     }
   }
 }

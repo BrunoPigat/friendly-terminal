@@ -36,6 +36,21 @@ export interface AIEngineInfo {
   isAvailable: boolean
 }
 
+export interface AgentEntry {
+  name: string
+  description: string
+  model?: string
+  tools?: string
+  filePath: string
+}
+
+export interface SkillEntry {
+  name: string
+  description: string
+  userInvocable?: boolean
+  filePath: string
+}
+
 export interface PtySpawnOptions {
   shell?: string
   cwd?: string
@@ -56,6 +71,7 @@ export interface IElectronAPI {
   // Filesystem
   listDisks: () => Promise<DiskInfo[]>
   readDir: (dirPath: string) => Promise<DirEntry[]>
+  readFile: (filePath: string) => Promise<string | null>
   stat: (filePath: string) => Promise<DirEntry>
   fsWatch: (dirPath: string) => Promise<void>
   fsUnwatch: (dirPath: string) => Promise<void>
@@ -77,6 +93,8 @@ export interface IElectronAPI {
   listEngines: () => Promise<AIEngineInfo[]>
   detectEngines: () => Promise<AIEngineInfo[]>
   getCommand: (engineId: string, intent: string, params?: Record<string, string>) => Promise<string>
+  listAgents: (engineId: string, projectPath: string) => Promise<AgentEntry[]>
+  listSkills: (engineId: string, projectPath: string) => Promise<SkillEntry[]>
 
   // Settings
   getSetting: (key: string) => Promise<unknown>

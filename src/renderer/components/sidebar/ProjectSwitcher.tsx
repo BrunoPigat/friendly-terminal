@@ -1,12 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useProjectStore } from '@/stores/project-store'
-import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
 import ProjectDialog from '@/components/project/ProjectDialog'
+import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
 
 /**
  * Dropdown for switching between projects.
- * Shows active project name + engine badge, with options to
- * create new, switch, or manage projects.
+ * Shows active project name, with options to
+ * create new, switch, or delete projects.
  */
 export default function ProjectSwitcher() {
   const projects = useProjectStore((s) => s.projects)
@@ -15,6 +15,7 @@ export default function ProjectSwitcher() {
 
   const [open, setOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown when clicking outside
@@ -40,6 +41,12 @@ export default function ProjectSwitcher() {
   const handleCreateNew = useCallback(() => {
     setOpen(false)
     setDialogOpen(true)
+  }, [])
+
+  const handleDeleteClick = useCallback((e: React.MouseEvent, projectName: string) => {
+    e.stopPropagation()
+    setOpen(false)
+    setDeleteTarget(projectName)
   }, [])
 
   return (
@@ -73,17 +80,40 @@ export default function ProjectSwitcher() {
           {/* Project list */}
           <div className="max-h-48 overflow-y-auto">
             {projects.map((project) => (
-              <button
+              <div
                 key={project.name}
-                onClick={() => handleSelect(project)}
-                className={`flex w-full items-center justify-between px-2.5 py-2 text-xs transition-colors ${
+                className={`flex items-center transition-colors group/item ${
                   activeProject?.name === project.name
                     ? 'bg-zinc-800 text-zinc-100'
                     : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
                 }`}
               >
-                <span className="truncate">{project.name}</span>
-              </button>
+                <button
+                  onClick={() => handleSelect(project)}
+                  className="flex-1 px-2.5 py-2 text-xs text-left truncate"
+                >
+                  {project.name}
+                </button>
+                <button
+                  onClick={(e) => handleDeleteClick(e, project.name)}
+                  className="shrink-0 mr-1.5 flex h-5 w-5 items-center justify-center rounded text-zinc-600 opacity-0 group-hover/item:opacity-100 hover:text-red-400 transition-all"
+                  title={`Delete ${project.name}`}
+                >
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </div>
             ))}
 
             {projects.length === 0 && (
@@ -118,6 +148,14 @@ export default function ProjectSwitcher() {
 
       {/* Create project dialog */}
       {dialogOpen && <ProjectDialog onClose={() => setDialogOpen(false)} />}
+
+      {/* Delete confirmation dialog */}
+      {deleteTarget && (
+        <DeleteProjectDialog
+          projectName={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   )
 }

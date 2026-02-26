@@ -21,6 +21,7 @@ const api: IElectronAPI = {
   // Filesystem
   listDisks: () => ipcRenderer.invoke('fs:list-disks'),
   readDir: (dirPath) => ipcRenderer.invoke('fs:read-dir', dirPath),
+  readFile: (filePath) => ipcRenderer.invoke('fs:read-file', filePath),
   stat: (filePath) => ipcRenderer.invoke('fs:stat', filePath),
   fsWatch: (dirPath) => ipcRenderer.invoke('fs:watch', dirPath),
   fsUnwatch: (dirPath) => ipcRenderer.invoke('fs:unwatch', dirPath),
@@ -46,6 +47,8 @@ const api: IElectronAPI = {
   listEngines: () => ipcRenderer.invoke('engines:available'),
   detectEngines: () => ipcRenderer.invoke('engines:detect'),
   getCommand: (engineId, intent, params) => ipcRenderer.invoke('engines:command', engineId, intent, params),
+  listAgents: (engineId, projectPath) => ipcRenderer.invoke('engines:list-agents', engineId, projectPath),
+  listSkills: (engineId, projectPath) => ipcRenderer.invoke('engines:list-skills', engineId, projectPath),
 
   // Settings
   getSetting: (key) => ipcRenderer.invoke('settings:get', key),

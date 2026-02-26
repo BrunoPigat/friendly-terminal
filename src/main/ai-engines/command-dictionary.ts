@@ -33,11 +33,11 @@ interface CommandTemplate {
 const COMMAND_MAP: Record<string, Record<CommandIntent, CommandTemplate>> = {
   claude: {
     'start-session': {
-      template: 'claude --dangerously-skip-permissions',
+      template: 'claude',
       isInSession: false
     },
     'continue-session': {
-      template: 'claude --continue --dangerously-skip-permissions',
+      template: 'claude --continue',
       isInSession: false
     },
     'add-dir': {

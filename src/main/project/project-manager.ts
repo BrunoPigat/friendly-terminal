@@ -1,6 +1,9 @@
-import { readdir, stat, mkdir, rm } from 'fs/promises'
+import { readdir, stat, mkdir, rm, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { getProjectsDir, ensureDir } from '../util/paths'
+import { copyDefaultSkills } from './skills-manager'
+import { copyDefaultAgents } from './agents-manager'
+import { createDefaultInstructionFiles } from './engine-instructions'
 
 export interface Project {
   name: string
@@ -53,6 +56,19 @@ export async function createProject(name: string): Promise<Project> {
 
   const projectDir = join(projectsDir, name)
   await mkdir(projectDir, { recursive: true })
+
+  // Create empty tips.md — tips will be populated by the tip-creator skill
+  const tipsPath = join(projectDir, 'tips.md')
+  await writeFile(tipsPath, '', 'utf-8')
+
+  // Copy default skills into .claude/skills/
+  await copyDefaultSkills(projectDir)
+
+  // Copy default agents into .claude/agents/ and .gemini/agents/
+  await copyDefaultAgents(projectDir)
+
+  // Create default instruction files (CLAUDE.md, GEMINI.md)
+  await createDefaultInstructionFiles(projectDir, name)
 
   const info = await stat(projectDir)
   console.log(`[project-manager] created project "${name}" at ${projectDir}`)

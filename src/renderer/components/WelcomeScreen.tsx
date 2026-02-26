@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import { APP_NAME } from '@/lib/constants'
+import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
 
 export default function WelcomeScreen() {
   const projects = useProjectStore((s) => s.projects)
@@ -12,6 +13,7 @@ export default function WelcomeScreen() {
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   useEffect(() => {
     loadProjects()
@@ -61,34 +63,63 @@ export default function WelcomeScreen() {
           ) : (
             <div className="space-y-1">
               {projects.map((project) => (
-                <button
+                <div
                   key={project.name}
-                  onClick={() => {
-                    console.log('[WelcomeScreen] Project selected:', project)
-                    selectProject(project)
-                  }}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-zinc-800/80 group"
+                  className="flex items-center rounded-lg transition-colors hover:bg-zinc-800/80 group"
                 >
-                  {/* Folder icon */}
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="shrink-0 text-zinc-500 group-hover:text-zinc-300"
+                  <button
+                    onClick={() => {
+                      console.log('[WelcomeScreen] Project selected:', project)
+                      selectProject(project)
+                    }}
+                    className="flex flex-1 items-center gap-3 px-4 py-3 text-left min-w-0"
                   >
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                  </svg>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-zinc-200 group-hover:text-zinc-50 truncate">
-                      {project.name}
+                    {/* Folder icon */}
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="shrink-0 text-zinc-500 group-hover:text-zinc-300"
+                    >
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-zinc-200 group-hover:text-zinc-50 truncate">
+                        {project.name}
+                      </div>
+                      <div className="text-[11px] text-zinc-600 truncate">{project.path}</div>
                     </div>
-                    <div className="text-[11px] text-zinc-600 truncate">{project.path}</div>
-                  </div>
+                  </button>
+
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDeleteTarget(project.name)
+                    }}
+                    className="shrink-0 mr-2 flex h-7 w-7 items-center justify-center rounded text-zinc-600 opacity-0 group-hover:opacity-100 hover:bg-zinc-700 hover:text-red-400 transition-all"
+                    title={`Delete ${project.name}`}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+
                   {/* Arrow */}
                   <svg
                     width="16"
@@ -97,11 +128,11 @@ export default function WelcomeScreen() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="shrink-0 text-zinc-700 group-hover:text-zinc-400"
+                    className="shrink-0 mr-4 text-zinc-700 group-hover:text-zinc-400"
                   >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -146,6 +177,14 @@ export default function WelcomeScreen() {
           </button>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      {deleteTarget && (
+        <DeleteProjectDialog
+          projectName={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   )
 }

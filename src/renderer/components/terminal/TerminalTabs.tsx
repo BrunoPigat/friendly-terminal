@@ -30,7 +30,7 @@ export default function TerminalTabs() {
       engine: defaultEngine,
       isActive: true,
       cwd: activeProject?.path || '',
-      viewMode: 'chat'
+      isLoading: true
     })
   }, [addTerminal, defaultEngine, tabList.length, activeProject])
 

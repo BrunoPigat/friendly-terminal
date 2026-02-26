@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useTerminalStore, generateTerminalId } from '@/stores/terminal-store'
+import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
 import * as api from '@/lib/api'
@@ -14,7 +15,7 @@ export default function TerminalToolbar() {
   const activeTerminalId = useTerminalStore((s) => s.activeTerminalId)
   const addTerminal = useTerminalStore((s) => s.addTerminal)
   const updateTerminal = useTerminalStore((s) => s.updateTerminal)
-  const setViewMode = useTerminalStore((s) => s.setViewMode)
+  const activeProject = useProjectStore((s) => s.activeProject)
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
 
   const activeTerminal = activeTerminalId ? terminals.get(activeTerminalId) : undefined
@@ -41,10 +42,10 @@ export default function TerminalToolbar() {
       name: `${ENGINE_NAMES[selectedEngine]} #${count}`,
       engine: selectedEngine,
       isActive: true,
-      cwd: '',
-      viewMode: 'chat'
+      cwd: activeProject?.path ?? '',
+      isLoading: true
     })
-  }, [addTerminal, selectedEngine, terminals.size])
+  }, [addTerminal, selectedEngine, terminals.size, activeProject])
 
   const handleContinueSession = useCallback(() => {
     if (!activeTerminal) return
@@ -97,33 +98,6 @@ export default function TerminalToolbar() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Chat / Terminal view toggle */}
-      {activeTerminal && (
-        <div className="flex items-center rounded-md border border-zinc-800 overflow-hidden">
-          <ViewToggleButton
-            active={activeTerminal.viewMode === 'chat'}
-            onClick={() => setViewMode(activeTerminal.id, 'chat')}
-            label="Chat"
-          >
-            {/* Chat icon */}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          </ViewToggleButton>
-          <ViewToggleButton
-            active={activeTerminal.viewMode === 'terminal'}
-            onClick={() => setViewMode(activeTerminal.id, 'terminal')}
-            label="Terminal"
-          >
-            {/* Terminal icon */}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="4 17 10 11 4 5" />
-              <line x1="12" y1="19" x2="20" y2="19" />
-            </svg>
-          </ViewToggleButton>
-        </div>
-      )}
-
       {/* Current working directory */}
       {activeTerminal?.cwd && (
         <div className="flex items-center gap-1 text-xs text-zinc-500 truncate max-w-[300px]">
@@ -144,32 +118,5 @@ export default function TerminalToolbar() {
         </div>
       )}
     </div>
-  )
-}
-
-function ViewToggleButton({
-  active,
-  onClick,
-  label,
-  children
-}: {
-  active: boolean
-  onClick: () => void
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-1 px-2 py-1 text-[10px] uppercase tracking-wider transition-colors ${
-        active
-          ? 'bg-zinc-700 text-zinc-100'
-          : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-      }`}
-      title={label}
-    >
-      {children}
-      <span>{label}</span>
-    </button>
   )
 }

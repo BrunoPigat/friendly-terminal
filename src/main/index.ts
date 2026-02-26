@@ -6,6 +6,7 @@ import { registerFsIpc, closeAllWatchers } from './filesystem/fs-ipc'
 import { registerProjectIpc } from './project/project-ipc'
 import { detectEngines, getAvailableEngines } from './ai-engines/engine-registry'
 import { getCommand, isInSessionCommand } from './ai-engines/command-dictionary'
+import { registerConfigIpc } from './ai-engines/config-ipc'
 import { initAutoUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from './updater/auto-updater'
 import { getProjectsDir } from './util/paths'
 
@@ -14,7 +15,9 @@ const settingsStore = new Store({
   defaults: {
     defaultEngine: 'claude',
     sidebarWidth: 280,
-    sidebarCollapsed: false
+    sidebarCollapsed: false,
+    rightPanelWidth: 280,
+    rightPanelCollapsed: true
   }
 })
 
@@ -137,6 +140,7 @@ app.whenReady().then(() => {
   // Register IPC handlers that don't need the window
   registerGlobalIpc()
   registerProjectIpc()
+  registerConfigIpc()
 
   // Create the main window
   createWindow()

@@ -7,37 +7,49 @@ interface SettingsState {
   defaultEngine: EngineId
   sidebarWidth: number
   sidebarCollapsed: boolean
+  rightPanelWidth: number
+  rightPanelCollapsed: boolean
   loaded: boolean
 
   loadSettings: () => Promise<void>
   updateSetting: <K extends keyof SettingsData>(key: K, value: SettingsData[K]) => Promise<void>
   setSidebarWidth: (width: number) => void
   toggleSidebar: () => void
+  setRightPanelWidth: (width: number) => void
+  toggleRightPanel: () => void
 }
 
 interface SettingsData {
   defaultEngine: EngineId
   sidebarWidth: number
   sidebarCollapsed: boolean
+  rightPanelWidth: number
+  rightPanelCollapsed: boolean
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   defaultEngine: 'claude',
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
   sidebarCollapsed: false,
+  rightPanelWidth: 280,
+  rightPanelCollapsed: false,
   loaded: false,
 
   loadSettings: async () => {
     try {
-      const [defaultEngine, sidebarWidth, sidebarCollapsed] = await Promise.all([
+      const [defaultEngine, sidebarWidth, sidebarCollapsed, rightPanelWidth, rightPanelCollapsed] = await Promise.all([
         api.getSetting('defaultEngine'),
         api.getSetting('sidebarWidth'),
-        api.getSetting('sidebarCollapsed')
+        api.getSetting('sidebarCollapsed'),
+        api.getSetting('rightPanelWidth'),
+        api.getSetting('rightPanelCollapsed')
       ])
       set({
         defaultEngine: (defaultEngine as EngineId) ?? 'claude',
         sidebarWidth: (sidebarWidth as number) ?? DEFAULT_SIDEBAR_WIDTH,
         sidebarCollapsed: (sidebarCollapsed as boolean) ?? false,
+        rightPanelWidth: (rightPanelWidth as number) ?? 280,
+        rightPanelCollapsed: (rightPanelCollapsed as boolean) ?? false,
         loaded: true
       })
     } catch (err) {
@@ -61,5 +73,13 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
   toggleSidebar: () => {
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed }))
+  },
+
+  setRightPanelWidth: (width) => {
+    set({ rightPanelWidth: width })
+  },
+
+  toggleRightPanel: () => {
+    set((state) => ({ rightPanelCollapsed: !state.rightPanelCollapsed }))
   }
 }))

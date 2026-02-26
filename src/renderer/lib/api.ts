@@ -33,6 +33,21 @@ export interface PtySpawnOptions {
   rows?: number
 }
 
+export interface AgentEntry {
+  name: string
+  description: string
+  model?: string
+  tools?: string
+  filePath: string
+}
+
+export interface SkillEntry {
+  name: string
+  description: string
+  userInvocable?: boolean
+  filePath: string
+}
+
 interface IElectronAPI {
   ptySpawn: (id: string, options?: PtySpawnOptions) => Promise<void>
   ptyWrite: (id: string, data: string) => void
@@ -43,6 +58,7 @@ interface IElectronAPI {
 
   listDisks: () => Promise<DiskInfo[]>
   readDir: (dirPath: string) => Promise<DirEntry[]>
+  readFile: (filePath: string) => Promise<string | null>
   stat: (filePath: string) => Promise<DirEntry>
   fsWatch: (dirPath: string) => Promise<void>
   fsUnwatch: (dirPath: string) => Promise<void>
@@ -61,6 +77,8 @@ interface IElectronAPI {
   listEngines: () => Promise<unknown[]>
   detectEngines: () => Promise<unknown[]>
   getCommand: (engineId: string, intent: string, params?: Record<string, string>) => Promise<string>
+  listAgents: (engineId: string, projectPath: string) => Promise<AgentEntry[]>
+  listSkills: (engineId: string, projectPath: string) => Promise<SkillEntry[]>
 
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>
@@ -86,6 +104,7 @@ export const onPtyExit = (cb: (id: string, code: number) => void) => getApi().on
 // Filesystem
 export const listDisks = () => getApi().listDisks()
 export const readDir = (p: string) => getApi().readDir(p)
+export const readFile = (p: string) => getApi().readFile(p)
 export const fsWatch = (p: string) => getApi().fsWatch(p)
 export const fsUnwatch = (p: string) => getApi().fsUnwatch(p)
 export const onFsChanged = (cb: (rootPath: string, changedDir: string) => void) => getApi().onFsChanged(cb)
@@ -95,6 +114,25 @@ export const listProjects = () => getApi().listProjects()
 export const createProject = (name: string) => getApi().createProject(name)
 export const deleteProject = (name: string) => getApi().deleteProject(name)
 export const getProjectsDir = () => getApi().getProjectsDir()
+
+// MCP
+export const listMcpServers = (projectName: string) => getApi().listMcpServers(projectName)
+
+// AI Engines
+export const listEngines = () => getApi().listEngines()
+export const detectEngines = () => getApi().detectEngines()
+export const getCommand = (engineId: string, intent: string, params?: Record<string, string>) =>
+  getApi().getCommand(engineId, intent, params)
+export const listAgents = async (engineId: string, projectPath: string) => {
+  const fn = getApi().listAgents
+  if (typeof fn !== 'function') return []
+  return fn(engineId, projectPath)
+}
+export const listSkills = async (engineId: string, projectPath: string) => {
+  const fn = getApi().listSkills
+  if (typeof fn !== 'function') return []
+  return fn(engineId, projectPath)
+}
 
 // Settings
 export const getSetting = (key: string) => getApi().getSetting(key)

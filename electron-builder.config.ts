@@ -12,6 +12,13 @@ const config: Configuration = {
     '!node_modules/**/*',
     'node_modules/node-pty/**/*'
   ],
+  extraResources: [
+    {
+      from: 'resources/default-projects',
+      to: 'default-projects',
+      filter: ['**/*']
+    }
+  ],
   win: {
     target: [
       {

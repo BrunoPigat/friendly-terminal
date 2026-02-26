@@ -1,8 +1,6 @@
 import { create } from 'zustand'
 import type { EngineId } from '@/lib/constants'
 
-export type ViewMode = 'chat' | 'terminal'
-
 export interface TerminalEntry {
   id: string
   /** PTY id returned from ptyCreate */
@@ -11,7 +9,8 @@ export interface TerminalEntry {
   engine: EngineId
   isActive: boolean
   cwd: string
-  viewMode: ViewMode
+  /** Whether the terminal is still loading (engine starting) */
+  isLoading: boolean
 }
 
 interface TerminalState {
@@ -22,7 +21,6 @@ interface TerminalState {
   removeTerminal: (id: string) => void
   setActive: (id: string) => void
   updateTerminal: (id: string, patch: Partial<TerminalEntry>) => void
-  setViewMode: (id: string, mode: ViewMode) => void
   clearAll: () => void
 }
 
@@ -32,13 +30,16 @@ export function generateTerminalId(): string {
   return `term-${nextId++}`
 }
 
+let storeUpdateCount = 0
+
 export const useTerminalStore = create<TerminalState>((set) => ({
   terminals: new Map(),
   activeTerminalId: null,
 
   addTerminal: (entry) =>
     set((state) => {
-      console.log('[TerminalStore] addTerminal called with:', entry)
+      storeUpdateCount++
+      console.log(`[TerminalStore] Update #${storeUpdateCount} - addTerminal called with:`, entry)
       const next = new Map(state.terminals)
       // Deactivate all others
       for (const [key, t] of next) {
@@ -71,6 +72,8 @@ export const useTerminalStore = create<TerminalState>((set) => ({
 
   setActive: (id) =>
     set((state) => {
+      storeUpdateCount++
+      console.log(`[TerminalStore] Update #${storeUpdateCount} - setActive called with:`, id)
       const next = new Map(state.terminals)
       for (const [key, t] of next) {
         next.set(key, { ...t, isActive: key === id })
@@ -82,17 +85,10 @@ export const useTerminalStore = create<TerminalState>((set) => ({
     set((state) => {
       const existing = state.terminals.get(id)
       if (!existing) return state
+      storeUpdateCount++
+      console.log(`[TerminalStore] Update #${storeUpdateCount} - updateTerminal called with:`, id, patch)
       const next = new Map(state.terminals)
       next.set(id, { ...existing, ...patch })
-      return { terminals: next }
-    }),
-
-  setViewMode: (id, mode) =>
-    set((state) => {
-      const existing = state.terminals.get(id)
-      if (!existing) return state
-      const next = new Map(state.terminals)
-      next.set(id, { ...existing, viewMode: mode })
       return { terminals: next }
     }),
 
