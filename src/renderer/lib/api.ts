@@ -59,6 +59,7 @@ interface IElectronAPI {
   listDisks: () => Promise<DiskInfo[]>
   readDir: (dirPath: string) => Promise<DirEntry[]>
   readFile: (filePath: string) => Promise<string | null>
+  writeFile: (filePath: string, content: string) => Promise<void>
   stat: (filePath: string) => Promise<DirEntry>
   fsWatch: (dirPath: string) => Promise<void>
   fsUnwatch: (dirPath: string) => Promise<void>
@@ -107,6 +108,7 @@ export const onPtyExit = (cb: (id: string, code: number) => void) => getApi().on
 export const listDisks = () => getApi().listDisks()
 export const readDir = (p: string) => getApi().readDir(p)
 export const readFile = (p: string) => getApi().readFile(p)
+export const writeFile = (p: string, content: string) => getApi().writeFile(p, content)
 export const fsWatch = (p: string) => getApi().fsWatch(p)
 export const fsUnwatch = (p: string) => getApi().fsUnwatch(p)
 export const onFsChanged = (cb: (rootPath: string, changedDir: string) => void) => getApi().onFsChanged(cb)

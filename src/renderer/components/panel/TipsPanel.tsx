@@ -119,10 +119,9 @@ export default function TipsPanel() {
       if (normalizedChanged === normalizedRoot || changedDir === projectPath) {
         api.readFile(tipsPath).then((text) => {
           setContent(text)
-          // Auto-switch to Tips tab and open panel when tips.md changes
+          // Auto-switch to Tips tab when tips.md changes
           if (text !== null) {
             useSettingsStore.getState().setRightPanelActiveTab('tips')
-            useSettingsStore.getState().setRightPanelCollapsed(false)
           }
         }).catch(() => setContent(null))
       }

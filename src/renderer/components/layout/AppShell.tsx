@@ -22,7 +22,6 @@ export default function AppShell() {
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
 
-  const rightPanelCollapsed = useSettingsStore((s) => s.rightPanelCollapsed)
   const setRightPanelWidth = useSettingsStore((s) => s.setRightPanelWidth)
 
   // Mount GUI actions listener (MCP server → renderer)
@@ -150,7 +149,6 @@ export default function AppShell() {
   const rightResizing = useRef(false)
   const handleRightResizeStart = useCallback(
     (e: React.MouseEvent) => {
-      if (rightPanelCollapsed) return
       e.preventDefault()
       rightResizing.current = true
       const onMouseMove = (moveEvent: MouseEvent) => {
@@ -173,7 +171,7 @@ export default function AppShell() {
       document.addEventListener('mousemove', onMouseMove)
       document.addEventListener('mouseup', onMouseUp)
     },
-    [rightPanelCollapsed, setRightPanelWidth]
+    [setRightPanelWidth]
   )
 
   // No project selected → show welcome screen
@@ -235,12 +233,10 @@ export default function AppShell() {
         </main>
 
         {/* Right panel resize handle */}
-        {!rightPanelCollapsed && (
-          <div
-            className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-zinc-700 active:bg-zinc-600 transition-colors"
-            onMouseDown={handleRightResizeStart}
-          />
-        )}
+        <div
+          className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-zinc-700 active:bg-zinc-600 transition-colors"
+          onMouseDown={handleRightResizeStart}
+        />
 
         {/* Right panel */}
         <RightPanel />

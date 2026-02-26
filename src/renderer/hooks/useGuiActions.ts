@@ -21,19 +21,12 @@ export function useGuiActions(): void {
         case 'switch_tab':
           if (payload.tab) {
             store.setRightPanelActiveTab(payload.tab)
-            // Also ensure the panel is open when switching tabs
-            if (store.rightPanelCollapsed) {
-              store.setRightPanelCollapsed(false)
-            }
           }
           break
 
         case 'open_panel':
-          store.setRightPanelCollapsed(false)
-          break
-
         case 'close_panel':
-          store.setRightPanelCollapsed(true)
+          // Right panel is always active — no-op
           break
       }
     })

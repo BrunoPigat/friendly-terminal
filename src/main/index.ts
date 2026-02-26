@@ -17,8 +17,7 @@ const settingsStore = new Store({
     defaultEngine: 'claude',
     sidebarWidth: 280,
     sidebarCollapsed: false,
-    rightPanelWidth: 280,
-    rightPanelCollapsed: true
+    rightPanelWidth: 280
   }
 })
 

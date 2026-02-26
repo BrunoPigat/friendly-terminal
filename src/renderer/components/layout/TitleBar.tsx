@@ -41,6 +41,9 @@ export default function TitleBar() {
           <>
             <span className="text-zinc-600">/</span>
             <span className="text-zinc-400">{activeProject.name}</span>
+            <span className="text-zinc-600 truncate max-w-[300px] text-[10px]" title={activeProject.path}>
+              {activeProject.path}
+            </span>
           </>
         )}
       </div>

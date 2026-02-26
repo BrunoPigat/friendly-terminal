@@ -174,6 +174,16 @@ async function createDefaultPermissions(projectDir: string): Promise<void> {
       currentAllow.push(guiPattern)
     }
 
+    // Allow editing tips.md in the project root
+    const tipsEditPattern = 'Edit(tips.md)'
+    const tipsWritePattern = 'Write(tips.md)'
+    if (!currentAllow.includes(tipsEditPattern)) {
+      currentAllow.push(tipsEditPattern)
+    }
+    if (!currentAllow.includes(tipsWritePattern)) {
+      currentAllow.push(tipsWritePattern)
+    }
+
     existing.permissions = { ...permissions, allow: currentAllow }
     await writeFile(claudeSettingsPath, JSON.stringify(existing, null, 2), 'utf-8')
     console.log(`[project-manager] Created Claude default permissions at ${claudeSettingsPath}`)

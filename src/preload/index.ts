@@ -22,6 +22,7 @@ const api: IElectronAPI = {
   listDisks: () => ipcRenderer.invoke('fs:list-disks'),
   readDir: (dirPath) => ipcRenderer.invoke('fs:read-dir', dirPath),
   readFile: (filePath) => ipcRenderer.invoke('fs:read-file', filePath),
+  writeFile: (filePath, content) => ipcRenderer.invoke('fs:write-file', filePath, content),
   stat: (filePath) => ipcRenderer.invoke('fs:stat', filePath),
   fsWatch: (dirPath) => ipcRenderer.invoke('fs:watch', dirPath),
   fsUnwatch: (dirPath) => ipcRenderer.invoke('fs:unwatch', dirPath),

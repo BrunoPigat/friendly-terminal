@@ -72,6 +72,7 @@ export interface IElectronAPI {
   listDisks: () => Promise<DiskInfo[]>
   readDir: (dirPath: string) => Promise<DirEntry[]>
   readFile: (filePath: string) => Promise<string | null>
+  writeFile: (filePath: string, content: string) => Promise<void>
   stat: (filePath: string) => Promise<DirEntry>
   fsWatch: (dirPath: string) => Promise<void>
   fsUnwatch: (dirPath: string) => Promise<void>

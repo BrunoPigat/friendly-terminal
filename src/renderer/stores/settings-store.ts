@@ -10,7 +10,6 @@ interface SettingsState {
   sidebarWidth: number
   sidebarCollapsed: boolean
   rightPanelWidth: number
-  rightPanelCollapsed: boolean
   rightPanelActiveTab: RightPanelTab
   loaded: boolean
 
@@ -19,9 +18,7 @@ interface SettingsState {
   setSidebarWidth: (width: number) => void
   toggleSidebar: () => void
   setRightPanelWidth: (width: number) => void
-  toggleRightPanel: () => void
   setRightPanelActiveTab: (tab: RightPanelTab) => void
-  setRightPanelCollapsed: (collapsed: boolean) => void
 }
 
 interface SettingsData {
@@ -29,7 +26,6 @@ interface SettingsData {
   sidebarWidth: number
   sidebarCollapsed: boolean
   rightPanelWidth: number
-  rightPanelCollapsed: boolean
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -37,25 +33,22 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
   sidebarCollapsed: false,
   rightPanelWidth: 280,
-  rightPanelCollapsed: false,
   rightPanelActiveTab: 'tips',
   loaded: false,
 
   loadSettings: async () => {
     try {
-      const [defaultEngine, sidebarWidth, sidebarCollapsed, rightPanelWidth, rightPanelCollapsed] = await Promise.all([
+      const [defaultEngine, sidebarWidth, sidebarCollapsed, rightPanelWidth] = await Promise.all([
         api.getSetting('defaultEngine'),
         api.getSetting('sidebarWidth'),
         api.getSetting('sidebarCollapsed'),
-        api.getSetting('rightPanelWidth'),
-        api.getSetting('rightPanelCollapsed')
+        api.getSetting('rightPanelWidth')
       ])
       set({
         defaultEngine: (defaultEngine as EngineId) ?? 'claude',
         sidebarWidth: (sidebarWidth as number) ?? DEFAULT_SIDEBAR_WIDTH,
         sidebarCollapsed: (sidebarCollapsed as boolean) ?? false,
         rightPanelWidth: (rightPanelWidth as number) ?? 280,
-        rightPanelCollapsed: (rightPanelCollapsed as boolean) ?? false,
         loaded: true
       })
     } catch (err) {
@@ -85,15 +78,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     set({ rightPanelWidth: width })
   },
 
-  toggleRightPanel: () => {
-    set((state) => ({ rightPanelCollapsed: !state.rightPanelCollapsed }))
-  },
-
   setRightPanelActiveTab: (tab) => {
     set({ rightPanelActiveTab: tab })
-  },
-
-  setRightPanelCollapsed: (collapsed) => {
-    set({ rightPanelCollapsed: collapsed })
   }
 }))

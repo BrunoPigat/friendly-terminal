@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { stat, readFile } from 'fs/promises'
+import { stat, readFile, writeFile, mkdir } from 'fs/promises'
 import { watch, type FSWatcher } from 'fs'
 import { dirname } from 'path'
 import { listDisks } from './disk-service'
@@ -48,6 +48,16 @@ export function registerFsIpc(mainWindow: BrowserWindow): void {
       const code = (err as NodeJS.ErrnoException).code
       if (code === 'ENOENT') return null
       console.error(`[fs:read-file] FAILED "${filePath}": ${(err as Error).message}`)
+      throw err
+    }
+  })
+
+  ipcMain.handle('fs:write-file', async (_event, filePath: string, content: string) => {
+    try {
+      await mkdir(dirname(filePath), { recursive: true })
+      await writeFile(filePath, content, 'utf-8')
+    } catch (err) {
+      console.error(`[fs:write-file] FAILED "${filePath}": ${(err as Error).message}`)
       throw err
     }
   })
