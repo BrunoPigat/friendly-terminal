@@ -1,0 +1,106 @@
+export interface Project {
+  name: string
+  path: string
+  createdAt: string
+}
+
+export interface DirEntry {
+  name: string
+  path: string
+  isDirectory: boolean
+  size: number
+  modified: number
+}
+
+export interface DiskInfo {
+  letter: string
+  label: string
+  free: number
+  size: number
+}
+
+export interface McpServer {
+  command: string
+  args?: string[]
+  env?: Record<string, string>
+}
+
+export interface PtySpawnOptions {
+  shell?: string
+  cwd?: string
+  env?: Record<string, string>
+  cols?: number
+  rows?: number
+}
+
+interface IElectronAPI {
+  ptySpawn: (id: string, options?: PtySpawnOptions) => Promise<void>
+  ptyWrite: (id: string, data: string) => void
+  ptyResize: (id: string, cols: number, rows: number) => void
+  ptyKill: (id: string) => Promise<void>
+  onPtyData: (callback: (id: string, data: string) => void) => () => void
+  onPtyExit: (callback: (id: string, code: number) => void) => () => void
+
+  listDisks: () => Promise<DiskInfo[]>
+  readDir: (dirPath: string) => Promise<DirEntry[]>
+  stat: (filePath: string) => Promise<DirEntry>
+  fsWatch: (dirPath: string) => Promise<void>
+  fsUnwatch: (dirPath: string) => Promise<void>
+  onFsChanged: (callback: (rootPath: string, changedDir: string) => void) => () => void
+
+  listProjects: () => Promise<Project[]>
+  createProject: (name: string) => Promise<Project>
+  deleteProject: (name: string) => Promise<void>
+  getProjectsDir: () => Promise<string>
+
+  listMcpServers: (projectName: string) => Promise<unknown>
+  addMcpServer: (projectName: string, name: string, server: McpServer) => Promise<void>
+  updateMcpServer: (projectName: string, name: string, server: McpServer) => Promise<void>
+  removeMcpServer: (projectName: string, name: string) => Promise<void>
+
+  listEngines: () => Promise<unknown[]>
+  detectEngines: () => Promise<unknown[]>
+  getCommand: (engineId: string, intent: string, params?: Record<string, string>) => Promise<string>
+
+  getSetting: (key: string) => Promise<unknown>
+  setSetting: (key: string, value: unknown) => Promise<void>
+
+  windowMinimize: () => void
+  windowMaximize: () => void
+  windowClose: () => void
+}
+
+function getApi(): IElectronAPI {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (window as any).api as IElectronAPI
+}
+
+// PTY
+export const ptySpawn = (id: string, opts?: PtySpawnOptions) => getApi().ptySpawn(id, opts)
+export const ptyWrite = (id: string, data: string) => getApi().ptyWrite(id, data)
+export const ptyResize = (id: string, cols: number, rows: number) => getApi().ptyResize(id, cols, rows)
+export const ptyKill = (id: string) => getApi().ptyKill(id)
+export const onPtyData = (cb: (id: string, data: string) => void) => getApi().onPtyData(cb)
+export const onPtyExit = (cb: (id: string, code: number) => void) => getApi().onPtyExit(cb)
+
+// Filesystem
+export const listDisks = () => getApi().listDisks()
+export const readDir = (p: string) => getApi().readDir(p)
+export const fsWatch = (p: string) => getApi().fsWatch(p)
+export const fsUnwatch = (p: string) => getApi().fsUnwatch(p)
+export const onFsChanged = (cb: (rootPath: string, changedDir: string) => void) => getApi().onFsChanged(cb)
+
+// Projects
+export const listProjects = () => getApi().listProjects()
+export const createProject = (name: string) => getApi().createProject(name)
+export const deleteProject = (name: string) => getApi().deleteProject(name)
+export const getProjectsDir = () => getApi().getProjectsDir()
+
+// Settings
+export const getSetting = (key: string) => getApi().getSetting(key)
+export const setSetting = (key: string, value: unknown) => getApi().setSetting(key, value)
+
+// Window
+export const windowMinimize = () => getApi().windowMinimize()
+export const windowMaximize = () => getApi().windowMaximize()
+export const windowClose = () => getApi().windowClose()

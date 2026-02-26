@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(tail:*)",
+      "Bash(nvm use 20.16.0 && cd \"D:/Projetos/AI Solutions/your-friendly-terminal\" && npx electron-vite dev 2>&1)",
+      "Bash(cd \"D:\\\\Projetos\\\\AI Solutions\\\\your-friendly-terminal\" && nvm use 20.16.0 && npx electron-vite dev 2>&1)",
+      "Bash(dir:*)"
+    ]
+  }
+}
