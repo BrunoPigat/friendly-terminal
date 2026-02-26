@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, Menu, clipboard } from 'electron'
 import { join } from 'path'
 import Store from 'electron-store'
 import { registerPtyIpc, killAllPty } from './pty/pty-ipc'
@@ -45,6 +45,17 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false
+    }
+  })
+
+  // Intercept Ctrl+V before Chromium handles it — send clipboard text to renderer
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && input.key.toLowerCase() === 'v' && input.type === 'keyDown') {
+      const text = clipboard.readText()
+      if (text) {
+        mainWindow?.webContents.send('clipboard:paste', text)
+        event.preventDefault()
+      }
     }
   })
 
@@ -137,6 +148,9 @@ function registerGlobalIpc(): void {
 // --- App lifecycle ---
 
 app.whenReady().then(() => {
+  // Remove default menu so its accelerators (Ctrl+V, etc.) don't intercept terminal input
+  Menu.setApplicationMenu(null)
+
   // Register IPC handlers that don't need the window
   registerGlobalIpc()
   registerProjectIpc()

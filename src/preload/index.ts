@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, clipboard } from 'electron'
 import type { IElectronAPI } from './types'
 
 const api: IElectronAPI = {
@@ -60,6 +60,14 @@ const api: IElectronAPI = {
     const listener = (_event: Electron.IpcRendererEvent, payload: unknown) => callback(payload)
     ipcRenderer.on('gui:action', listener)
     return () => ipcRenderer.removeListener('gui:action', listener)
+  },
+
+  // Clipboard
+  clipboardReadText: () => clipboard.readText(),
+  onClipboardPaste: (callback) => {
+    const listener = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+    ipcRenderer.on('clipboard:paste', listener)
+    return () => ipcRenderer.removeListener('clipboard:paste', listener)
   },
 
   // Window controls

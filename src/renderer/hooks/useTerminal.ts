@@ -31,6 +31,7 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
   const fitAddonRef = useRef<FitAddon | null>(null)
   const disposeDataRef = useRef<(() => void) | null>(null)
   const disposeExitRef = useRef<(() => void) | null>(null)
+  const disposePasteRef = useRef<(() => void) | null>(null)
   const ptyReadyRef = useRef(false)
   const engineCommandSentRef = useRef(false)
   const engineReadyRef = useRef(false)
@@ -60,7 +61,20 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
     const terminalEntry = useTerminalStore.getState().terminals.get(terminalId)
     const engineCommand = terminalEntry?.engine === 'claude' ? 'claude' : 'gemini'
 
-    const terminal = new Terminal(DEFAULT_TERMINAL_OPTIONS)
+    const terminal = new Terminal({
+      ...DEFAULT_TERMINAL_OPTIONS,
+      customKeyEventHandler: (event: KeyboardEvent) => {
+        // Ctrl+C: copy selection to clipboard (like VS Code), otherwise send SIGINT
+        if (event.ctrlKey && event.key === 'c' && terminal.hasSelection()) {
+          return false
+        }
+        // Ctrl+Shift+C / Ctrl+Shift+V: let browser handle
+        if (event.ctrlKey && event.shiftKey && (event.key === 'C' || event.key === 'V')) {
+          return false
+        }
+        return true
+      }
+    })
     terminalRef.current = terminal
 
     const fitAddon = new FitAddon()
@@ -104,6 +118,8 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
         }
 
         ptyReadyRef.current = true
+        // Mark the terminal as having a live PTY so toolbar buttons (Clear, Compact) enable
+        updateTerminal(terminalId, { ptyId: terminalId })
 
         // PTY → Terminal
         disposeDataRef.current = api.onPtyData((id, data) => {
@@ -137,7 +153,15 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
             ptyReadyRef.current = false
             spawnedPtys.delete(terminalId)
             engineStartedPtys.delete(terminalId)
+            updateTerminal(terminalId, { ptyId: null })
             terminal.write(`\r\n[Process exited with code ${exitCode}]\r\n`)
+          }
+        })
+
+        // Clipboard paste from main process (Ctrl+V intercepted via before-input-event)
+        disposePasteRef.current = window.api.onClipboardPaste((text) => {
+          if (ptyReadyRef.current && terminalId === useTerminalStore.getState().activeTerminalId) {
+            api.ptyWrite(terminalId, text)
           }
         })
 
@@ -173,6 +197,10 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
             // Small delay after cd to ensure the shell processes it before engine starts
             setTimeout(() => {
               if (!ptyReadyRef.current) return
+
+              // Clear the terminal so the user starts with a clean screen
+              api.ptyWrite(terminalId, 'clear\r')
+
               console.log('[useTerminal] 📤 Sending engine command:', engineCommand, 'to terminal:', terminalId)
               api.ptyWrite(terminalId, `${engineCommand}\r`)
               engineCommandSentRef.current = true
@@ -224,6 +252,7 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
       resizeObserver.disconnect()
       disposeDataRef.current?.()
       disposeExitRef.current?.()
+      disposePasteRef.current?.()
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current)
         loadingTimeoutRef.current = null

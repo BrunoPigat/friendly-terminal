@@ -104,6 +104,10 @@ export interface IElectronAPI {
   // GUI control
   onGuiAction: (callback: (payload: unknown) => void) => () => void
 
+  // Clipboard
+  clipboardReadText: () => string
+  onClipboardPaste: (callback: (text: string) => void) => () => void
+
   // Window controls
   windowMinimize: () => void
   windowMaximize: () => void
