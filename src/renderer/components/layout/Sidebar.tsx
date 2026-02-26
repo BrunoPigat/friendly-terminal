@@ -6,7 +6,7 @@ interface SidebarProps {
 }
 
 /**
- * Dark sidebar wrapper with collapse toggle.
+ * Windows 11-style sidebar with collapse toggle.
  * Width is controlled via the settings store.
  */
 export default function Sidebar({ children }: SidebarProps) {
@@ -20,13 +20,13 @@ export default function Sidebar({ children }: SidebarProps) {
 
   return (
     <aside
-      className="relative flex shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 overflow-hidden transition-[width] duration-200"
+      className="relative flex shrink-0 flex-col border-r border-win-border bg-win-bg overflow-hidden transition-[width] duration-200"
       style={{ width: collapsed ? 40 : sidebarWidth }}
     >
       {/* Collapse / expand toggle */}
       <button
         onClick={handleToggle}
-        className="absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 transition-colors"
+        className="absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-md text-win-text-tertiary hover:bg-win-hover hover:text-win-text-secondary transition-colors"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         <svg

@@ -22,11 +22,9 @@ export default function WelcomeScreen() {
   const handleCreate = async () => {
     const trimmed = newName.trim()
     if (!trimmed) return
-    console.log('[WelcomeScreen] Creating project:', trimmed)
     setCreating(true)
     try {
       await createProject(trimmed)
-      console.log('[WelcomeScreen] Project created successfully:', trimmed)
     } catch (err) {
       console.error('[WelcomeScreen] Failed to create project:', err)
     }
@@ -44,55 +42,62 @@ export default function WelcomeScreen() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-950 text-zinc-100">
-      <div className="w-full max-w-md px-6">
+    <div className="flex h-full w-full flex-col items-center justify-center bg-win-bg text-win-text">
+      <div className="w-full max-w-2xl px-8">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-zinc-100">{APP_NAME}</h1>
-          <p className="mt-2 text-sm text-zinc-500">Select a project or create a new one</p>
+        <div className="mb-12 text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-win-accent">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="10" r="1" fill="currentColor" stroke="none" />
+              <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-semibold text-win-text">{APP_NAME}</h1>
+          <p className="mt-3 text-base text-win-text-secondary">
+            {projects.length > 0 ? 'Pick a project to start chatting with your AI assistant' : 'Create your first project to get started'}
+          </p>
         </div>
 
         {/* Project list */}
-        <div className="mb-4">
+        <div className="mb-6">
           {loading ? (
-            <div className="py-8 text-center text-sm text-zinc-500">Loading projects...</div>
+            <div className="flex flex-col items-center py-14 gap-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-win-border border-t-win-accent" />
+              <span className="text-base text-win-text-secondary">Loading your projects...</span>
+            </div>
           ) : projects.length === 0 ? (
-            <div className="py-8 text-center text-sm text-zinc-500">
-              No projects yet. Create one to get started.
+            <div className="flex flex-col items-center py-14 gap-3">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-win-text-tertiary">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                <line x1="12" y1="11" x2="12" y2="17" />
+                <line x1="9" y1="14" x2="15" y2="14" />
+              </svg>
+              <p className="text-lg text-win-text-secondary">No projects yet</p>
+              <p className="text-sm text-win-text-tertiary">Create one below to start working with AI</p>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-2">
               {projects.map((project) => (
                 <div
                   key={project.name}
-                  className="flex items-center rounded-lg transition-colors hover:bg-zinc-800/80 group"
+                  className="group flex items-center rounded-xl border border-win-border bg-win-card transition-all hover:bg-win-hover"
                 >
                   <button
-                    onClick={() => {
-                      console.log('[WelcomeScreen] Project selected:', project)
-                      selectProject(project)
-                    }}
-                    className="flex flex-1 items-center gap-3 px-4 py-3 text-left min-w-0"
+                    onClick={() => selectProject(project)}
+                    className="flex flex-1 items-center gap-4 px-5 py-5 text-left min-w-0"
                   >
-                    {/* Folder icon */}
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="shrink-0 text-zinc-500 group-hover:text-zinc-300"
-                    >
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                    </svg>
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-win-accent-subtle text-win-accent group-hover:bg-win-accent group-hover:text-white transition-colors">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-zinc-200 group-hover:text-zinc-50 truncate">
+                      <div className="text-base font-medium text-win-text truncate">
                         {project.name}
                       </div>
-                      <div className="text-[11px] text-zinc-600 truncate">{project.path}</div>
+                      <div className="text-sm text-win-text-tertiary truncate mt-0.5">{project.path}</div>
                     </div>
                   </button>
 
@@ -102,19 +107,10 @@ export default function WelcomeScreen() {
                       e.stopPropagation()
                       setDeleteTarget(project.name)
                     }}
-                    className="shrink-0 mr-2 flex h-7 w-7 items-center justify-center rounded text-zinc-600 opacity-0 group-hover:opacity-100 hover:bg-zinc-700 hover:text-red-400 transition-all"
+                    className="shrink-0 mr-3 flex h-9 w-9 items-center justify-center rounded-lg text-win-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
                     title={`Delete ${project.name}`}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
@@ -122,13 +118,13 @@ export default function WelcomeScreen() {
 
                   {/* Arrow */}
                   <svg
-                    width="16"
-                    height="16"
+                    width="18"
+                    height="18"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="shrink-0 mr-4 text-zinc-700 group-hover:text-zinc-400"
+                    className="shrink-0 mr-5 text-win-text-tertiary group-hover:text-win-accent transition-colors"
                   >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
@@ -140,26 +136,26 @@ export default function WelcomeScreen() {
 
         {/* Create new project */}
         {showCreate ? (
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Project name"
+              placeholder="Enter project name..."
               autoFocus
-              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-500"
+              className="flex-1 rounded-xl border border-win-border bg-win-card px-5 py-3.5 text-base text-win-text placeholder-win-text-tertiary outline-none focus:border-win-accent focus:ring-2 focus:ring-win-accent/20 transition-all"
             />
             <button
               onClick={handleCreate}
               disabled={!newName.trim() || creating}
-              className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-white disabled:opacity-40 transition-colors"
+              className="rounded-xl bg-win-accent px-6 py-3.5 text-base font-medium text-white hover:bg-win-accent-dark disabled:opacity-40 transition-colors"
             >
               {creating ? '...' : 'Create'}
             </button>
             <button
               onClick={() => { setShowCreate(false); setNewName('') }}
-              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 transition-colors"
+              className="rounded-xl border border-win-border px-5 py-3.5 text-base text-win-text-secondary hover:bg-win-hover transition-colors"
             >
               Cancel
             </button>
@@ -167,9 +163,9 @@ export default function WelcomeScreen() {
         ) : (
           <button
             onClick={() => setShowCreate(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-700 px-4 py-3 text-sm text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 transition-colors"
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-win-border-strong px-5 py-5 text-base font-medium text-win-text-secondary hover:border-win-accent hover:text-win-accent hover:bg-win-accent-subtle transition-all"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="8" y1="3" x2="8" y2="13" />
               <line x1="3" y1="8" x2="13" y2="8" />
             </svg>

@@ -64,7 +64,6 @@ export default function TerminalToolbar() {
 
   const handleClear = useCallback(() => {
     if (!activeTerminal) return
-    // Both Claude Code and Gemini CLI support /clear
     api.ptyWrite(activeTerminal.id, '/clear\n')
     setShowClearDialog(false)
   }, [activeTerminal])
@@ -72,24 +71,16 @@ export default function TerminalToolbar() {
   const handleSaveAndClear = useCallback(async () => {
     if (!activeTerminal || !activeProject) return
 
-    // Ask the engine to run the summarizer, then we'll clear
-    // The summary will be written by asking the engine to summarize and write to ENGINE.md
     const engineMdFile = currentEngine === 'claude' ? 'CLAUDE.md' : 'GEMINI.md'
-    const engineMdPath = `${activeProject.path}/${engineMdFile}`.replace(/\\/g, '/')
 
-    // Send the summarizer command — ask the engine to summarize and save to file
     const summarizePrompt =
       `Before clearing, summarize this session using the /summarizer skill format and append the summary to \`${engineMdFile}\` in the project root. ` +
       `Add a "## Session - ${new Date().toLocaleDateString()}" heading before the summary. ` +
       `After saving, confirm with "Summary saved."`
 
     api.ptyWrite(activeTerminal.id, summarizePrompt + '\n')
-
-    // Close the dialog immediately — the engine will handle the save
     setShowClearDialog(false)
 
-    // Wait a moment for the engine to process, then send /clear
-    // We use a generous delay since the engine needs to generate + write the summary
     setTimeout(() => {
       api.ptyWrite(activeTerminal.id, '/clear\n')
     }, 30000)
@@ -99,7 +90,6 @@ export default function TerminalToolbar() {
 
   const handleCompact = useCallback(() => {
     if (!activeTerminal?.ptyId) return
-    // Claude Code uses /compact, Gemini CLI uses /compress
     const command = currentEngine === 'claude' ? '/compact' : '/compress'
     api.ptyWrite(activeTerminal.id, command + '\n')
   }, [activeTerminal, currentEngine])
@@ -108,17 +98,17 @@ export default function TerminalToolbar() {
 
   return (
     <>
-      <div className="flex h-10 shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-950 px-3">
-        {/* AI engine selector */}
-        <div className="flex items-center gap-1.5">
-          <label htmlFor="engine-select" className="text-[10px] uppercase tracking-wider text-zinc-500">
-            Engine
+      <div className="flex h-12 shrink-0 items-center gap-3 border-b border-win-border bg-win-surface px-4">
+        {/* AI assistant selector */}
+        <div className="flex items-center gap-2">
+          <label htmlFor="engine-select" className="text-sm font-medium text-win-text-secondary">
+            Assistant
           </label>
           <select
             id="engine-select"
             value={selectedEngine}
             onChange={handleEngineChange}
-            className="rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-xs text-zinc-300 outline-none focus:border-zinc-600 transition-colors cursor-pointer"
+            className="rounded-md border border-win-border bg-win-card px-3 py-2 text-sm text-win-text outline-none focus:border-win-accent transition-colors cursor-pointer"
           >
             {(Object.entries(ENGINE_NAMES) as [EngineId, string][]).map(([key, name]) => (
               <option key={key} value={key}>
@@ -132,43 +122,60 @@ export default function TerminalToolbar() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleNewSession}
-            className="rounded bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100 transition-colors"
+            className="flex items-center gap-2 rounded-md bg-win-accent px-5 py-2 text-sm font-medium text-white hover:bg-win-accent-dark transition-colors"
           >
-            New Session
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            New Chat
           </button>
 
-          {/* Continue Session - only for Claude engine */}
+          {/* Resume Chat - only for Claude */}
           {(activeTerminal?.engine === 'claude' || selectedEngine === 'claude') && (
             <button
               onClick={handleContinueSession}
               disabled={!hasPty}
-              className="rounded bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              Continue
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              Resume
             </button>
           )}
 
           {/* Separator */}
-          <div className="mx-0.5 h-4 w-px bg-zinc-800" />
+          <div className="mx-0.5 h-4 w-px bg-win-border" />
 
-          {/* Clear button */}
+          {/* Reset Chat button */}
           <button
             onClick={handleClearClick}
             disabled={!hasPty}
-            title="Clear session"
-            className="rounded bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Reset chat — start a fresh conversation"
+            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Clear
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            Reset
           </button>
 
-          {/* Compact button */}
+          {/* Summarize button */}
           <button
             onClick={handleCompact}
             disabled={!hasPty}
-            title={currentEngine === 'claude' ? 'Compact conversation context' : 'Compress conversation context'}
-            className="rounded bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Summarize the conversation to free up context"
+            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Compact
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="4 14 10 14 10 20" />
+              <polyline points="20 10 14 10 14 4" />
+              <line x1="14" y1="10" x2="21" y2="3" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+            Summarize
           </button>
         </div>
 
@@ -177,7 +184,7 @@ export default function TerminalToolbar() {
 
         {/* Current working directory */}
         {activeTerminal?.cwd && (
-          <div className="flex items-center gap-1 text-xs text-zinc-500 truncate max-w-[300px]">
+          <div className="flex items-center gap-1.5 text-sm text-win-text-tertiary truncate max-w-[300px]">
             <svg
               width="12"
               height="12"

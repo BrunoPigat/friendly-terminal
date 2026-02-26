@@ -3,21 +3,21 @@ import type { ITerminalOptions } from '@xterm/xterm'
 export const APP_NAME = 'Your Friendly Terminal'
 
 /**
- * Supported AI coding engines.
+ * Supported AI coding assistants.
  */
 export const ENGINE_NAMES = {
-  claude: 'Claude Code',
-  gemini: 'Gemini CLI'
+  claude: 'Claude',
+  gemini: 'Gemini'
 } as const
 
 export type EngineId = keyof typeof ENGINE_NAMES
 
 /**
  * Default xterm.js terminal options.
- * JetBrains Mono 14px, dark zinc palette.
+ * Dark terminal for contrast against the light UI shell.
  */
 export const DEFAULT_TERMINAL_OPTIONS: ITerminalOptions = {
-  fontFamily: "'JetBrains Mono', monospace",
+  fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace",
   fontSize: 14,
   fontWeight: '400',
   lineHeight: 1.3,
@@ -26,28 +26,28 @@ export const DEFAULT_TERMINAL_OPTIONS: ITerminalOptions = {
   scrollback: 10_000,
   allowProposedApi: true,
   theme: {
-    background: '#09090b', // zinc-950
-    foreground: '#fafafa', // zinc-50
-    cursor: '#fafafa',
-    cursorAccent: '#09090b',
-    selectionBackground: '#3f3f4680', // zinc-700 semi-transparent
-    selectionForeground: '#fafafa',
-    black: '#09090b',
-    red: '#ef4444',
-    green: '#22c55e',
-    yellow: '#eab308',
-    blue: '#3b82f6',
-    magenta: '#a855f7',
-    cyan: '#06b6d4',
-    white: '#fafafa',
-    brightBlack: '#52525b',
-    brightRed: '#f87171',
-    brightGreen: '#4ade80',
-    brightYellow: '#facc15',
-    brightBlue: '#60a5fa',
-    brightMagenta: '#c084fc',
-    brightCyan: '#22d3ee',
-    brightWhite: '#ffffff'
+    background: '#1E1E1E',
+    foreground: '#D4D4D4',
+    cursor: '#D4D4D4',
+    cursorAccent: '#1E1E1E',
+    selectionBackground: '#264F7840',
+    selectionForeground: '#D4D4D4',
+    black: '#1E1E1E',
+    red: '#F44747',
+    green: '#6A9955',
+    yellow: '#D7BA7D',
+    blue: '#569CD6',
+    magenta: '#C586C0',
+    cyan: '#4EC9B0',
+    white: '#D4D4D4',
+    brightBlack: '#808080',
+    brightRed: '#F44747',
+    brightGreen: '#6A9955',
+    brightYellow: '#D7BA7D',
+    brightBlue: '#569CD6',
+    brightMagenta: '#C586C0',
+    brightCyan: '#4EC9B0',
+    brightWhite: '#FFFFFF'
   }
 }
 

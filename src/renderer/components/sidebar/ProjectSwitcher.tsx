@@ -5,8 +5,7 @@ import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
 
 /**
  * Dropdown for switching between projects.
- * Shows active project name, with options to
- * create new, switch, or delete projects.
+ * Windows 11-style dropdown with clean borders and hover states.
  */
 export default function ProjectSwitcher() {
   const projects = useProjectStore((s) => s.projects)
@@ -50,11 +49,11 @@ export default function ProjectSwitcher() {
   }, [])
 
   return (
-    <div className="relative px-3 pb-3 border-b border-zinc-800 mb-2" ref={dropdownRef}>
+    <div className="relative px-3 pb-3 border-b border-win-border mb-2" ref={dropdownRef}>
       {/* Trigger */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between rounded border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 hover:border-zinc-700 transition-colors"
+        className="flex w-full items-center justify-between rounded-md border border-win-border bg-win-card px-3 py-2 text-sm text-win-text hover:border-win-border-strong transition-colors"
       >
         <span className="truncate">
           {activeProject ? activeProject.name : 'Select project...'}
@@ -67,7 +66,7 @@ export default function ProjectSwitcher() {
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
-            className={`transition-transform text-zinc-500 ${open ? 'rotate-180' : ''}`}
+            className={`transition-transform text-win-text-tertiary ${open ? 'rotate-180' : ''}`}
           >
             <polyline points="2,3 5,7 8,3" />
           </svg>
@@ -76,7 +75,7 @@ export default function ProjectSwitcher() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute left-3 right-3 top-full z-20 mt-1 rounded border border-zinc-800 bg-zinc-900 shadow-xl overflow-hidden">
+        <div className="absolute left-3 right-3 top-full z-20 mt-1 rounded-lg border border-win-border bg-win-card  overflow-hidden">
           {/* Project list */}
           <div className="max-h-48 overflow-y-auto">
             {projects.map((project) => (
@@ -84,19 +83,19 @@ export default function ProjectSwitcher() {
                 key={project.name}
                 className={`flex items-center transition-colors group/item ${
                   activeProject?.name === project.name
-                    ? 'bg-zinc-800 text-zinc-100'
-                    : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
+                    ? 'bg-win-accent-subtle text-win-accent'
+                    : 'text-win-text-secondary hover:bg-win-hover hover:text-win-text'
                 }`}
               >
                 <button
                   onClick={() => handleSelect(project)}
-                  className="flex-1 px-2.5 py-2 text-xs text-left truncate"
+                  className="flex-1 px-3 py-2 text-sm text-left truncate"
                 >
                   {project.name}
                 </button>
                 <button
                   onClick={(e) => handleDeleteClick(e, project.name)}
-                  className="shrink-0 mr-1.5 flex h-5 w-5 items-center justify-center rounded text-zinc-600 opacity-0 group-hover/item:opacity-100 hover:text-red-400 transition-all"
+                  className="shrink-0 mr-1.5 flex h-5 w-5 items-center justify-center rounded text-win-text-tertiary opacity-0 group-hover/item:opacity-100 hover:text-red-600 transition-all"
                   title={`Delete ${project.name}`}
                 >
                   <svg
@@ -117,17 +116,17 @@ export default function ProjectSwitcher() {
             ))}
 
             {projects.length === 0 && (
-              <div className="px-2.5 py-3 text-xs text-zinc-500 text-center">
+              <div className="px-2.5 py-3 text-xs text-win-text-tertiary text-center">
                 No projects yet
               </div>
             )}
           </div>
 
           {/* Create new */}
-          <div className="border-t border-zinc-800">
+          <div className="border-t border-win-border">
             <button
               onClick={handleCreateNew}
-              className="flex w-full items-center gap-1.5 px-2.5 py-2 text-xs text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200 transition-colors"
+              className="flex w-full items-center gap-1.5 px-3 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-accent transition-colors"
             >
               <svg
                 width="12"

@@ -6,9 +6,8 @@ import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
 import * as api from '@/lib/api'
 
 /**
- * Horizontal tab bar for terminal sessions.
- * Each tab shows the terminal name and engine.
- * Includes an add (+) button and close (x) per tab.
+ * Horizontal tab bar for chat sessions.
+ * Windows 11-style tabs with rounded selected indicator.
  */
 export default function TerminalTabs() {
   const terminals = useTerminalStore((s) => s.terminals)
@@ -26,7 +25,7 @@ export default function TerminalTabs() {
     addTerminal({
       id,
       ptyId: null,
-      name: `Terminal ${tabList.length + 1}`,
+      name: `Chat ${tabList.length + 1}`,
       engine: defaultEngine,
       isActive: true,
       cwd: activeProject?.path || '',
@@ -51,38 +50,41 @@ export default function TerminalTabs() {
   )
 
   return (
-    <div className="flex h-9 shrink-0 items-center border-b border-zinc-800 bg-zinc-950">
+    <div className="flex h-10 shrink-0 items-center border-b border-win-border bg-win-bg">
       {/* Tabs */}
-      <div className="flex flex-1 items-center overflow-x-auto">
+      <div className="flex flex-1 items-center overflow-x-auto px-1 gap-0.5">
         {tabList.map((term) => {
           const isActive = term.id === activeTerminalId
           return (
             <button
               key={term.id}
               onClick={() => handleSelect(term.id)}
-              className={`group flex h-9 items-center gap-1.5 border-r border-zinc-800 px-3 text-xs transition-colors ${
+              className={`group relative flex h-8 items-center gap-1.5 rounded-md px-3 text-sm transition-all ${
                 isActive
-                  ? 'bg-zinc-900 text-zinc-100'
-                  : 'bg-zinc-950 text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300'
+                  ? 'bg-win-card text-win-text'
+                  : 'text-win-text-secondary hover:bg-win-hover hover:text-win-text'
               }`}
             >
-              {/* Engine dot */}
-              <span
-                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                  term.engine === 'claude' ? 'bg-orange-400' : 'bg-blue-400'
-                }`}
-              />
+              {/* Active indicator - Windows 11 style bottom pill */}
+              {isActive && (
+                <div className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-win-accent" />
+              )}
+
+              {/* Chat bubble icon */}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 ${term.engine === 'claude' ? 'text-orange-500' : 'text-blue-500'}`}>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
 
               <span className="truncate max-w-[120px]">{term.name}</span>
 
-              <span className="text-[10px] text-zinc-600">
+              <span className="text-xs text-win-text-tertiary">
                 {ENGINE_NAMES[term.engine]}
               </span>
 
               {/* Close button */}
               <span
                 onClick={(e) => handleClose(e, term.id)}
-                className="ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded text-zinc-600 hover:bg-zinc-700 hover:text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded text-win-text-tertiary hover:bg-win-pressed hover:text-win-text opacity-0 group-hover:opacity-100 transition-opacity"
                 role="button"
                 aria-label={`Close ${term.name}`}
               >
@@ -96,11 +98,11 @@ export default function TerminalTabs() {
         })}
       </div>
 
-      {/* Add new terminal */}
+      {/* Add new chat */}
       <button
         onClick={handleNew}
-        className="flex h-9 w-9 shrink-0 items-center justify-center text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 transition-colors"
-        aria-label="New terminal"
+        className="flex h-10 w-10 shrink-0 items-center justify-center text-win-text-tertiary hover:bg-win-hover hover:text-win-text transition-colors"
+        aria-label="New chat"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
           <line x1="7" y1="2" x2="7" y2="12" />

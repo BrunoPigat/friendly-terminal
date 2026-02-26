@@ -9,6 +9,19 @@ export default function SkillList() {
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
   const [skills, setSkills] = useState<SkillEntry[]>([])
   const [loading, setLoading] = useState(false)
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
+
+  const toggleExpanded = useCallback((filePath: string) => {
+    setExpandedPaths((prev) => {
+      const next = new Set(prev)
+      if (next.has(filePath)) {
+        next.delete(filePath)
+      } else {
+        next.add(filePath)
+      }
+      return next
+    })
+  }, [])
 
   const loadSkills = useCallback(
     (projectPath: string) => {
@@ -35,7 +48,6 @@ export default function SkillList() {
     setLoading(true)
     loadSkills(activeProject.path)
 
-    // Watch for filesystem changes in skills directories
     const engineDir = defaultEngine === 'gemini' ? '.gemini' : '.claude'
     const skillsDirSuffix = `/${engineDir}/skills`
 
@@ -52,7 +64,7 @@ export default function SkillList() {
 
   if (!activeProject) {
     return (
-      <div className="p-4 text-xs text-zinc-500">
+      <div className="p-4 text-sm text-win-text-tertiary">
         Select a project to view skills.
       </div>
     )
@@ -60,48 +72,68 @@ export default function SkillList() {
 
   if (loading) {
     return (
-      <div className="p-4 text-xs text-zinc-500">Loading skills...</div>
+      <div className="p-4 text-sm text-win-text-tertiary">Loading skills...</div>
     )
   }
 
   if (skills.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 p-6 text-center">
-        <div className="text-zinc-600">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <div className="text-win-text-tertiary">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
           </svg>
         </div>
-        <p className="text-xs text-zinc-500">No skills found.</p>
-        <p className="text-[10px] text-zinc-600">
-          Add skills in <code className="rounded bg-zinc-800 px-1">.{defaultEngine}/skills/</code>
+        <p className="text-sm text-win-text-secondary">No skills yet</p>
+        <p className="text-xs text-win-text-tertiary">
+          Skills will appear here when you add them to your project.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-1.5 p-3">
-      {skills.map((skill) => (
-        <div
-          key={skill.filePath}
-          className="rounded border border-zinc-800 bg-zinc-900/50 px-3 py-2.5"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-zinc-200 truncate">{skill.name}</span>
-            {skill.userInvocable && (
-              <span className="shrink-0 rounded bg-emerald-900/40 px-1.5 py-0.5 text-[10px] text-emerald-400">
-                invocable
-              </span>
+    <div className="flex flex-col gap-2 p-4">
+      {skills.map((skill) => {
+        const isExpanded = expandedPaths.has(skill.filePath)
+        return (
+          <button
+            key={skill.filePath}
+            onClick={() => toggleExpanded(skill.filePath)}
+            className="rounded-lg border border-win-border bg-win-card px-5 py-4 hover:bg-win-hover transition-colors text-left w-full cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className={`shrink-0 text-win-text-tertiary transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              >
+                <polyline points="4,2 8,6 4,10" />
+              </svg>
+              <span className={`text-sm font-medium text-win-text ${isExpanded ? '' : 'truncate'}`}>{skill.name}</span>
+              {skill.userInvocable && (
+                <span className="shrink-0 rounded-md bg-green-50 px-2.5 py-1 text-xs text-green-700 font-medium border border-green-200">
+                  invocable
+                </span>
+              )}
+            </div>
+            {skill.description && (
+              <p className={`mt-1.5 pl-[22px] text-sm leading-relaxed text-win-text-secondary ${isExpanded ? '' : 'line-clamp-2'}`}>
+                {skill.description}
+              </p>
             )}
-          </div>
-          {skill.description && (
-            <p className="mt-1 text-[11px] leading-relaxed text-zinc-500 line-clamp-2">
-              {skill.description}
-            </p>
-          )}
-        </div>
-      ))}
+            {isExpanded && (
+              <p className="mt-2 pl-[22px] text-xs text-win-text-tertiary break-all">
+                {skill.filePath}
+              </p>
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }

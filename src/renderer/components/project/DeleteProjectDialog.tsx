@@ -57,12 +57,12 @@ export default function DeleteProjectDialog({ projectName, onClose }: DeleteProj
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
     >
-      <div className="w-full max-w-md rounded-lg border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-lg border border-win-border bg-win-card p-6">
         {/* Warning icon + header */}
         <div className="flex items-start gap-3 mb-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/10">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50">
             <svg
               width="20"
               height="20"
@@ -72,7 +72,7 @@ export default function DeleteProjectDialog({ projectName, onClose }: DeleteProj
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-red-400"
+              className="text-red-500"
             >
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
@@ -80,37 +80,37 @@ export default function DeleteProjectDialog({ projectName, onClose }: DeleteProj
             </svg>
           </div>
           <div>
-            <h2 className="text-base font-semibold text-zinc-100">
+            <h2 className="text-base font-semibold text-win-text">
               Delete Project
             </h2>
-            <p className="mt-1 text-xs text-zinc-400">
-              This action is permanent and cannot be undone.
+            <p className="mt-1 text-sm text-win-text-secondary">
+              This will permanently delete your project and all its files.
             </p>
           </div>
         </div>
 
         {/* Warning message */}
-        <div className="mb-5 rounded-md border border-red-500/20 bg-red-500/5 px-3.5 py-3">
-          <p className="text-xs leading-relaxed text-zinc-300">
-            Deleting <strong className="text-zinc-100">{projectName}</strong> will
-            permanently remove <strong className="text-red-400">everything</strong> inside
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3">
+          <p className="text-xs leading-relaxed text-win-text-secondary">
+            Deleting <strong className="text-win-text">{projectName}</strong> will
+            permanently remove <strong className="text-red-600">everything</strong> inside
             it, including:
           </p>
-          <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+          <ul className="mt-2 space-y-1 text-xs text-win-text-secondary">
             <li className="flex items-center gap-2">
-              <span className="text-red-400/80">&#x2022;</span>
+              <span className="text-red-400">&#x2022;</span>
               All agents and their configurations
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-red-400/80">&#x2022;</span>
+              <span className="text-red-400">&#x2022;</span>
               Memory files and conversation history
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-red-400/80">&#x2022;</span>
+              <span className="text-red-400">&#x2022;</span>
               MCP server configurations
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-red-400/80">&#x2022;</span>
+              <span className="text-red-400">&#x2022;</span>
               Skills, tips, and all project files
             </li>
           </ul>
@@ -119,8 +119,8 @@ export default function DeleteProjectDialog({ projectName, onClose }: DeleteProj
         {/* Confirmation form */}
         <form onSubmit={handleDelete} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="delete-confirm" className="text-xs text-zinc-400">
-              Type <strong className="text-zinc-200">{projectName}</strong> to confirm
+            <label htmlFor="delete-confirm" className="text-xs text-win-text-secondary">
+              Type <strong className="text-win-text">{projectName}</strong> to confirm
             </label>
             <input
               ref={inputRef}
@@ -131,7 +131,7 @@ export default function DeleteProjectDialog({ projectName, onClose }: DeleteProj
               placeholder={projectName}
               autoComplete="off"
               spellCheck={false}
-              className="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder-zinc-700 outline-none focus:border-zinc-500 transition-colors"
+              className="rounded-md border border-win-border bg-win-card px-3 py-2 text-sm text-win-text placeholder-win-text-tertiary outline-none focus:border-win-accent focus:ring-2 focus:ring-win-accent/20 transition-all"
             />
           </div>
 
@@ -140,14 +140,14 @@ export default function DeleteProjectDialog({ projectName, onClose }: DeleteProj
             <button
               type="button"
               onClick={onClose}
-              className="rounded px-4 py-2 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+              className="rounded-md px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!isMatch || deleting}
-              className="rounded bg-red-600 px-4 py-2 text-xs font-medium text-white hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {deleting ? 'Deleting...' : 'Delete Project'}
             </button>

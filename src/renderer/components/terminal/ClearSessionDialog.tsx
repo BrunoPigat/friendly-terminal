@@ -8,9 +8,7 @@ interface ClearSessionDialogProps {
 }
 
 /**
- * Warning dialog shown before clearing an AI session.
- * Offers the user three options: Cancel, Clear (lose data), or Save & Clear
- * (summarize session into ENGINE.md then clear).
+ * Windows 11-style confirmation dialog for resetting a chat session.
  */
 export default function ClearSessionDialog({
   engineName,
@@ -39,12 +37,12 @@ export default function ClearSessionDialog({
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
     >
-      <div className="w-full max-w-md rounded-lg border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-lg border border-win-border bg-win-card p-6">
         {/* Warning icon + header */}
         <div className="flex items-start gap-3 mb-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50">
             <svg
               width="20"
               height="20"
@@ -54,7 +52,7 @@ export default function ClearSessionDialog({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-amber-400"
+              className="text-amber-500"
             >
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
@@ -62,27 +60,22 @@ export default function ClearSessionDialog({
             </svg>
           </div>
           <div>
-            <h2 className="text-base font-semibold text-zinc-100">
-              Clear Session
+            <h2 className="text-base font-semibold text-win-text">
+              Reset Chat
             </h2>
-            <p className="mt-1 text-xs text-zinc-400">
-              This will clear the current {engineName} conversation.
+            <p className="mt-1 text-sm text-win-text-secondary">
+              This will start a fresh conversation with {engineName}.
             </p>
           </div>
         </div>
 
-        {/* Warning message */}
-        <div className="mb-5 rounded-md border border-amber-500/20 bg-amber-500/5 px-3.5 py-3">
-          <p className="text-xs leading-relaxed text-zinc-300">
-            All session context will be lost. The AI will start fresh with no
-            memory of this conversation.
+        {/* Info message */}
+        <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm leading-relaxed text-win-text-secondary">
+            Your AI assistant will forget everything from this conversation and start fresh.
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-            You can save a summary to{' '}
-            <strong className="text-zinc-200">
-              {engineName === 'Claude Code' ? 'CLAUDE.md' : 'GEMINI.md'}
-            </strong>{' '}
-            before clearing, so the AI retains key decisions and context.
+          <p className="mt-2 text-sm leading-relaxed text-win-text-tertiary">
+            Want to keep a summary? Choose <strong className="text-win-text">Save & Reset</strong> to save key decisions before resetting.
           </p>
         </div>
 
@@ -90,21 +83,21 @@ export default function ClearSessionDialog({
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
             onClick={onClose}
-            className="rounded px-4 py-2 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+            className="rounded-md px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onClear}
-            className="rounded bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-600 transition-colors"
+            className="rounded-md border border-win-border bg-win-card px-4 py-2 text-sm font-medium text-win-text hover:bg-win-hover transition-colors"
           >
-            Clear
+            Reset
           </button>
           <button
             onClick={onSaveAndClear}
-            className="rounded bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-500 transition-colors"
+            className="rounded-md bg-win-accent px-4 py-2 text-sm font-medium text-white hover:bg-win-accent-dark transition-colors"
           >
-            Save & Clear
+            Save & Reset
           </button>
         </div>
       </div>

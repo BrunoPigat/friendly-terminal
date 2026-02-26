@@ -5,10 +5,10 @@ import SkillList from './SkillList'
 import MCPPanel from './MCPPanel'
 
 const TABS: { id: RightPanelTab; label: string }[] = [
-  { id: 'tips', label: 'Tips' },
+  { id: 'tips', label: 'Suggestions' },
   { id: 'agents', label: 'Agents' },
   { id: 'skills', label: 'Skills' },
-  { id: 'mcps', label: 'MCPs' }
+  { id: 'mcps', label: 'Integrations' }
 ]
 
 export default function RightPanel() {
@@ -18,23 +18,26 @@ export default function RightPanel() {
 
   return (
     <aside
-      className="relative flex shrink-0 flex-col border-l border-zinc-800 bg-zinc-950 overflow-hidden"
+      className="relative flex shrink-0 flex-col border-l border-win-border bg-win-bg overflow-hidden"
       style={{ width: panelWidth }}
     >
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Tab bar */}
-        <div className="flex shrink-0 border-b border-zinc-800">
+        {/* Tab bar - Windows 11 style */}
+        <div className="flex shrink-0 border-b border-win-border bg-win-surface">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-2 py-2 text-[11px] font-medium transition-colors ${
+              className={`relative flex-1 px-4 py-3.5 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'border-b-2 border-blue-500 text-zinc-200'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  ? 'text-win-accent'
+                  : 'text-win-text-secondary hover:text-win-text'
               }`}
             >
               {tab.label}
+              {activeTab === tab.id && (
+                <div className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-win-accent" />
+              )}
             </button>
           ))}
         </div>

@@ -20,15 +20,15 @@ export default function TitleBar() {
 
   return (
     <header
-      className="flex h-9 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-3 select-none"
+      className="flex h-10 shrink-0 items-center justify-between border-b border-win-border bg-win-surface px-3 select-none"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
       {/* Left: back + app name + project */}
-      <div className="flex items-center gap-2 text-xs" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+      <div className="flex items-center gap-2 text-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         {activeProject && (
           <button
             onClick={handleBack}
-            className="flex items-center justify-center h-6 w-6 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="flex items-center justify-center h-6 w-6 rounded-md text-win-text-secondary hover:text-win-text hover:bg-win-hover transition-colors"
             title="Back to projects"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,26 +36,32 @@ export default function TitleBar() {
             </svg>
           </button>
         )}
-        <span className="font-semibold text-zinc-300" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>{APP_NAME}</span>
+        {/* App icon */}
+        <div className="flex h-5 w-5 items-center justify-center rounded-md bg-win-accent text-white" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </div>
+        <span className="font-semibold text-win-text" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>{APP_NAME}</span>
         {activeProject && (
           <>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-400">{activeProject.name}</span>
-            <span className="text-zinc-600 truncate max-w-[300px] text-[10px]" title={activeProject.path}>
+            <span className="text-win-text-tertiary">/</span>
+            <span className="text-win-text-secondary font-medium">{activeProject.name}</span>
+            <span className="text-win-text-tertiary truncate max-w-[300px] text-xs" title={activeProject.path}>
               {activeProject.path}
             </span>
           </>
         )}
       </div>
 
-      {/* Right: window controls */}
+      {/* Right: window controls - Windows 11 style */}
       <div
-        className="flex items-center gap-0.5"
+        className="flex items-center"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         <button
           onClick={handleMinimize}
-          className="flex h-7 w-10 items-center justify-center text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+          className="flex h-8 w-11 items-center justify-center text-win-text-secondary hover:bg-black/5 transition-colors"
           aria-label="Minimize"
         >
           <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor">
@@ -64,7 +70,7 @@ export default function TitleBar() {
         </button>
         <button
           onClick={handleMaximize}
-          className="flex h-7 w-10 items-center justify-center text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+          className="flex h-8 w-11 items-center justify-center text-win-text-secondary hover:bg-black/5 transition-colors"
           aria-label="Maximize"
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
@@ -73,7 +79,7 @@ export default function TitleBar() {
         </button>
         <button
           onClick={handleClose}
-          className="flex h-7 w-10 items-center justify-center text-zinc-400 hover:bg-red-600 hover:text-white transition-colors"
+          className="flex h-8 w-11 items-center justify-center text-win-text-secondary hover:bg-[#C42B1C] hover:text-white transition-colors"
           aria-label="Close"
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">

@@ -11,14 +11,14 @@ import * as api from '@/lib/api'
  */
 function stripMarkdown(md: string): string {
   return md
-    .replace(/\*\*(.+?)\*\*/g, '$1')   // bold
-    .replace(/\*(.+?)\*/g, '$1')        // italic
-    .replace(/_(.+?)_/g, '$1')          // italic alt
-    .replace(/`(.+?)`/g, '$1')          // inline code
-    .replace(/\[(.+?)\]\(.+?\)/g, '$1') // links
-    .replace(/^#+\s+/gm, '')            // headings
-    .replace(/^[-*]\s+/gm, '')          // list markers
-    .replace(/^\d+\.\s+/gm, '')         // numbered lists
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+    .replace(/^#+\s+/gm, '')
+    .replace(/^[-*]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
     .trim()
 }
 
@@ -40,24 +40,24 @@ function ChatBubble({
   return (
     <div className="flex gap-2 items-end" style={{ animationDelay: `${index * 80}ms` }}>
       {/* Avatar */}
-      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center mb-0.5">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 17l10 5 10-5" />
-          <path d="M2 12l10 5 10-5" />
+      <div className="flex-shrink-0 w-8 h-8 rounded-md bg-win-accent-subtle flex items-center justify-center mb-0.5">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-win-accent">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="16" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12.01" y2="8" />
         </svg>
       </div>
       {/* Bubble */}
-      <div className="group relative max-w-[85%] rounded-xl rounded-bl-sm bg-zinc-800/80 border border-zinc-700/50 px-3 py-2 shadow-sm">
-        <div className="prose prose-invert prose-sm max-w-none
-          prose-p:text-[11px] prose-p:leading-relaxed prose-p:text-zinc-300 prose-p:m-0
-          prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
-          prose-code:text-[10px] prose-code:bg-zinc-900/80 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-blue-300 prose-code:font-mono
-          prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-700 prose-pre:rounded prose-pre:text-[10px]
-          prose-ul:text-[11px] prose-ul:text-zinc-300 prose-ul:my-1 prose-ol:text-[11px] prose-ol:text-zinc-300 prose-ol:my-1
-          prose-li:text-[11px] prose-li:text-zinc-300 prose-li:my-0
-          prose-strong:text-zinc-100
-          prose-em:text-zinc-400">
+      <div className="group relative max-w-[85%] rounded-lg rounded-bl-sm bg-win-accent-subtle border border-win-accent/15 px-5 py-3.5">
+        <div className="prose prose-sm max-w-none
+          prose-p:text-sm prose-p:leading-relaxed prose-p:text-win-text prose-p:m-0
+          prose-a:text-win-accent prose-a:no-underline hover:prose-a:underline
+          prose-code:text-xs prose-code:bg-white prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-win-accent-dark prose-code:font-mono prose-code:border prose-code:border-win-border
+          prose-pre:bg-white prose-pre:border prose-pre:border-win-border prose-pre:rounded prose-pre:text-xs
+          prose-ul:text-sm prose-ul:text-win-text prose-ul:my-1.5 prose-ol:text-sm prose-ol:text-win-text prose-ol:my-1.5
+          prose-li:text-sm prose-li:text-win-text prose-li:my-0.5
+          prose-strong:text-win-text
+          prose-em:text-win-text-secondary">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         </div>
         {activeTerminalId && (
@@ -65,7 +65,7 @@ function ChatBubble({
             onClick={handleSend}
             title="Send to chat"
             className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity
-              p-1 rounded-md text-zinc-500 hover:text-blue-400 hover:bg-zinc-700/50"
+              p-1 rounded-md text-win-text-tertiary hover:text-win-accent hover:bg-win-hover"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="22" y1="2" x2="11" y2="13" />
@@ -119,7 +119,6 @@ export default function TipsPanel() {
       if (normalizedChanged === normalizedRoot || changedDir === projectPath) {
         api.readFile(tipsPath).then((text) => {
           setContent(text)
-          // Auto-switch to Tips tab when tips.md changes
           if (text !== null) {
             useSettingsStore.getState().setRightPanelActiveTab('tips')
           }
@@ -132,7 +131,6 @@ export default function TipsPanel() {
     }
   }, [activeProject])
 
-  // Split content by horizontal rules (---) into individual messages
   const messages = useMemo(() => {
     if (!content) return []
     return content
@@ -143,22 +141,22 @@ export default function TipsPanel() {
 
   if (!activeProject) {
     return (
-      <div className="p-4 text-xs text-zinc-500">
-        Select a project to view tips.
+      <div className="p-4 text-sm text-win-text-tertiary">
+        Select a project to see suggestions.
       </div>
     )
   }
 
   if (loading) {
     return (
-      <div className="p-4 text-xs text-zinc-500">Loading tips...</div>
+      <div className="p-4 text-sm text-win-text-tertiary">Loading tips...</div>
     )
   }
 
   if (content === null) {
     return (
       <div className="flex flex-col items-center gap-2 p-6 text-center">
-        <div className="text-zinc-600">
+        <div className="text-win-text-tertiary">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
@@ -167,9 +165,9 @@ export default function TipsPanel() {
             <polyline points="10 9 9 9 8 9" />
           </svg>
         </div>
-        <p className="text-xs text-zinc-500">No tips.md found.</p>
-        <p className="text-[10px] text-zinc-600">
-          Create a <code className="rounded bg-zinc-800 px-1">tips.md</code> in your project root to see tips here.
+        <p className="text-sm text-win-text-secondary">No tips.md found.</p>
+        <p className="text-xs text-win-text-tertiary">
+          Create a <code className="rounded bg-win-hover px-1 border border-win-border">tips.md</code> in your project root to see tips here.
         </p>
       </div>
     )
@@ -178,21 +176,21 @@ export default function TipsPanel() {
   if (messages.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 p-6 text-center">
-        <div className="text-zinc-600">
+        <div className="text-win-text-tertiary">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         </div>
-        <p className="text-xs text-zinc-500">No tips yet.</p>
-        <p className="text-[10px] text-zinc-600">
-          Tips will appear here as you chat with the AI assistant.
+        <p className="text-sm text-win-text-secondary">No suggestions yet</p>
+        <p className="text-xs text-win-text-tertiary">
+          Suggestions will appear here as you chat with your AI assistant.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-3 p-3 overflow-y-auto">
+    <div className="flex flex-col gap-4 p-4 overflow-y-auto">
       {messages.map((msg, i) => (
         <ChatBubble key={i} content={msg} index={i} activeTerminalId={activeTerminalId} />
       ))}

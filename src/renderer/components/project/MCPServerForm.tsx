@@ -13,8 +13,7 @@ interface EnvEntry {
 }
 
 /**
- * Form for adding or editing an MCP server configuration.
- * Fields: name, command, args (JSON array), env vars (key-value pairs).
+ * Windows 11-style form for adding or editing an MCP server configuration.
  */
 export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFormProps) {
   const isEditing = Boolean(server)
@@ -49,7 +48,6 @@ export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFor
     (e: React.FormEvent) => {
       e.preventDefault()
 
-      // Parse args JSON
       let args: string[]
       try {
         args = JSON.parse(argsText)
@@ -60,7 +58,6 @@ export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFor
         return
       }
 
-      // Build env object (skip empty keys)
       const env: Record<string, string> = {}
       for (const entry of envEntries) {
         const key = entry.key.trim()
@@ -85,14 +82,14 @@ export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFor
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h3 className="text-sm font-medium text-zinc-200">
+      <h3 className="text-sm font-medium text-win-text">
         {isEditing ? 'Edit MCP Server' : 'Add MCP Server'}
       </h3>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         {/* Name */}
         <div className="flex flex-col gap-1">
-          <label htmlFor="mcp-name" className="text-xs font-medium text-zinc-400">
+          <label htmlFor="mcp-name" className="text-xs font-medium text-win-text-secondary">
             Name
           </label>
           <input
@@ -102,13 +99,13 @@ export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFor
             onChange={(e) => setName(e.target.value)}
             placeholder="my-server"
             required
-            className="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-zinc-500 transition-colors"
+            className="rounded-md border border-win-border bg-win-card px-3 py-1.5 text-xs text-win-text placeholder-win-text-tertiary outline-none focus:border-win-accent focus:ring-2 focus:ring-win-accent/20 transition-all"
           />
         </div>
 
         {/* Command */}
         <div className="flex flex-col gap-1">
-          <label htmlFor="mcp-command" className="text-xs font-medium text-zinc-400">
+          <label htmlFor="mcp-command" className="text-xs font-medium text-win-text-secondary">
             Command
           </label>
           <input
@@ -118,13 +115,13 @@ export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFor
             onChange={(e) => setCommand(e.target.value)}
             placeholder="npx -y @modelcontextprotocol/server-filesystem"
             required
-            className="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-zinc-500 transition-colors font-mono"
+            className="rounded-md border border-win-border bg-win-card px-3 py-1.5 text-xs text-win-text placeholder-win-text-tertiary outline-none focus:border-win-accent focus:ring-2 focus:ring-win-accent/20 transition-all font-mono"
           />
         </div>
 
         {/* Args (JSON) */}
         <div className="flex flex-col gap-1">
-          <label htmlFor="mcp-args" className="text-xs font-medium text-zinc-400">
+          <label htmlFor="mcp-args" className="text-xs font-medium text-win-text-secondary">
             Args (JSON array)
           </label>
           <textarea
@@ -135,23 +132,23 @@ export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFor
               setArgsError(null)
             }}
             rows={3}
-            className={`rounded border bg-zinc-800 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 outline-none font-mono resize-none transition-colors ${
-              argsError ? 'border-red-600 focus:border-red-500' : 'border-zinc-700 focus:border-zinc-500'
-            }`}
+            className={`rounded-md border bg-win-card px-3 py-1.5 text-xs text-win-text placeholder-win-text-tertiary outline-none font-mono resize-none transition-all ${
+              argsError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-win-border focus:border-win-accent focus:ring-win-accent/20'
+            } focus:ring-2`}
           />
           {argsError && (
-            <span className="text-[10px] text-red-400">{argsError}</span>
+            <span className="text-[10px] text-red-600">{argsError}</span>
           )}
         </div>
 
         {/* Environment variables */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-400">Environment Variables</span>
+            <span className="text-xs font-medium text-win-text-secondary">Environment Variables</span>
             <button
               type="button"
               onClick={handleAddEnv}
-              className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="text-[10px] text-win-accent hover:text-win-accent-dark transition-colors"
             >
               + Add
             </button>
@@ -164,21 +161,21 @@ export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFor
                   value={entry.key}
                   onChange={(e) => handleEnvChange(i, 'key', e.target.value)}
                   placeholder="KEY"
-                  className="w-1/3 rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-zinc-500 font-mono transition-colors"
+                  className="w-1/3 rounded-md border border-win-border bg-win-card px-2 py-1 text-xs text-win-text placeholder-win-text-tertiary outline-none focus:border-win-accent font-mono transition-colors"
                 />
-                <span className="text-zinc-600 text-xs">=</span>
+                <span className="text-win-text-tertiary text-xs">=</span>
                 <input
                   type="text"
                   value={entry.value}
                   onChange={(e) => handleEnvChange(i, 'value', e.target.value)}
                   placeholder="value"
-                  className="flex-1 rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-zinc-500 font-mono transition-colors"
+                  className="flex-1 rounded-md border border-win-border bg-win-card px-2 py-1 text-xs text-win-text placeholder-win-text-tertiary outline-none focus:border-win-accent font-mono transition-colors"
                 />
                 {envEntries.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveEnv(i)}
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-zinc-600 hover:bg-zinc-700 hover:text-zinc-300 transition-colors"
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-win-text-tertiary hover:bg-win-hover hover:text-win-text transition-colors"
                     aria-label="Remove env var"
                   >
                     <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -197,14 +194,14 @@ export default function MCPServerForm({ server, onSave, onCancel }: MCPServerFor
           <button
             type="button"
             onClick={onCancel}
-            className="rounded px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+            className="rounded-md px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={!name.trim() || !command.trim()}
-            className="rounded bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="rounded-md bg-win-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-win-accent-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isEditing ? 'Save' : 'Add'}
           </button>

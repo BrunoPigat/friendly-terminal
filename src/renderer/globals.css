@@ -1,41 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @import 'tailwindcss';
 
 /*
- * Dark theme CSS variables (shadcn/ui compatible).
- * These follow the shadcn naming convention so that
- * future shadcn component integrations work seamlessly.
+ * Windows 11-inspired light theme.
+ * Clean, airy, with bright accent pops.
  */
 :root {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
+  --background: 0 0% 97%;
+  --foreground: 0 0% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 13%;
+  --primary: 207 90% 42%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 93%;
+  --secondary-foreground: 0 0% 13%;
+  --muted: 220 14% 93%;
+  --muted-foreground: 220 9% 46%;
+  --accent: 207 90% 42%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 87%;
+  --input: 220 13% 87%;
+  --ring: 207 90% 42%;
   --radius: 0.5rem;
 
-  --sidebar-bg: 240 6% 6%;
-  --terminal-bg: 240 10% 4%;
+  --sidebar-bg: 220 16% 96%;
+  --terminal-bg: 220 20% 97%;
 }
 
-* {
-  margin: 0;
-  padding: 0;
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -48,15 +47,15 @@ body,
 }
 
 body {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-    'Liberation Mono', monospace;
-  background-color: #09090b; /* zinc-950 */
-  color: #fafafa; /* zinc-50 */
+  font-family: 'Outfit', 'Segoe UI Variable', 'Segoe UI', -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  background-color: #f3f3f3;
+  color: #1a1a1a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Hide scrollbar globally, show on hover */
+/* Windows 11 style thin scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -67,12 +66,47 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46; /* zinc-700 */
+  background: #c4c4c4;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b; /* zinc-600 */
+  background: #a0a0a0;
+}
+
+/*
+ * Windows 11-inspired light surface scale.
+ * surface-50 = deepest (text), surface-950 = lightest (backgrounds)
+ * INVERTED from the dark theme: high numbers = light backgrounds.
+ */
+@theme {
+  --color-surface-950: #ffffff;
+  --color-surface-900: #f9f9f9;
+  --color-surface-850: #f3f3f3;
+  --color-surface-800: #e8e8e8;
+  --color-surface-700: #d1d1d1;
+  --color-surface-600: #b4b4b4;
+  --color-surface-500: #8c8c8c;
+  --color-surface-400: #6e6e6e;
+  --color-surface-300: #4a4a4a;
+  --color-surface-200: #333333;
+  --color-surface-100: #1a1a1a;
+  --color-surface-50: #111111;
+
+  --color-win-accent: #0078D4;
+  --color-win-accent-light: #60CDFF;
+  --color-win-accent-dark: #005A9E;
+  --color-win-accent-subtle: #E8F4FD;
+  --color-win-surface: #FFFFFF;
+  --color-win-bg: #F3F3F3;
+  --color-win-card: #FFFFFF;
+  --color-win-border: #E5E5E5;
+  --color-win-border-strong: #D1D1D1;
+  --color-win-text: #1A1A1A;
+  --color-win-text-secondary: #616161;
+  --color-win-text-tertiary: #8C8C8C;
+  --color-win-hover: #F5F5F5;
+  --color-win-pressed: #EBEBEB;
 }
 
 /* xterm.js container should fill its parent */

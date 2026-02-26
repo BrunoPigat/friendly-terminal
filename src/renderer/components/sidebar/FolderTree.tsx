@@ -35,7 +35,7 @@ export default function FolderTree({ rootPath, filter }: FolderTreeProps) {
 
   if (!rootPath) {
     return (
-      <div className="flex-1 flex items-center justify-center text-xs text-zinc-500 px-3">
+      <div className="flex-1 flex items-center justify-center text-sm text-win-text-tertiary px-3">
         No folder selected
       </div>
     )
@@ -43,13 +43,13 @@ export default function FolderTree({ rootPath, filter }: FolderTreeProps) {
 
   if (loading) {
     return (
-      <div className="px-3 py-2 text-xs text-zinc-500">Loading...</div>
+      <div className="px-3 py-2 text-xs text-win-text-tertiary">Loading...</div>
     )
   }
 
   if (filteredData.length === 0) {
     return (
-      <div className="px-3 py-4 text-xs text-zinc-600 text-center">
+      <div className="px-3 py-4 text-xs text-win-text-tertiary text-center">
         {filter ? 'No matches' : 'Empty folder'}
       </div>
     )
@@ -62,8 +62,8 @@ export default function FolderTree({ rootPath, filter }: FolderTreeProps) {
         idAccessor="id"
         openByDefault={false}
         width="100%"
-        indent={16}
-        rowHeight={28}
+        indent={18}
+        rowHeight={36}
         onToggle={(id) => handleToggle(id as unknown as string)}
         childrenAccessor={(node: FileNode) =>
           node.children === null ? [] : node.children ?? undefined
@@ -88,7 +88,6 @@ function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { r
   const getRelativePath = useCallback(
     (absolutePath: string) => {
       if (!rootPath) return absolutePath
-      // Normalize separators to forward slashes for comparison
       const normRoot = rootPath.replace(/\\/g, '/').replace(/\/$/, '')
       const normPath = absolutePath.replace(/\\/g, '/')
       if (normPath.startsWith(normRoot + '/')) {
@@ -113,9 +112,6 @@ function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { r
     (e: React.MouseEvent) => {
       e.stopPropagation()
       if (!activeTerminalId) return
-      // Both Claude and Gemini use @filePath to reference files in context
-      // Use project-relative path (e.g. @src/index.ts, not @C:\full\path)
-      // Don't send newline — let the user continue composing their message
       const relativePath = getRelativePath(node.data.path)
       const ref = `@${relativePath} `
       api.ptyWrite(activeTerminalId, ref)
@@ -127,12 +123,12 @@ function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { r
 
   return (
     <div
-      className="group flex items-center gap-1.5 px-2 text-xs cursor-pointer hover:bg-zinc-800/60 rounded-sm"
+      className="group flex items-center gap-2 px-2 text-sm cursor-pointer hover:bg-win-hover rounded-md"
       style={style}
       onClick={handleClick}
     >
       {/* Expand arrow */}
-      <span className="flex w-3.5 shrink-0 items-center justify-center text-zinc-500">
+      <span className="flex w-3.5 shrink-0 items-center justify-center text-win-text-tertiary">
         {isDir ? (
           <svg
             width="8"
@@ -147,13 +143,13 @@ function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { r
       </span>
 
       {/* Icon */}
-      <span className="shrink-0 text-zinc-500">
+      <span className="shrink-0 text-win-text-tertiary">
         {isDir ? (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
           </svg>
         ) : (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
             <polyline points="13 2 13 9 20 9" />
           </svg>
@@ -161,24 +157,29 @@ function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { r
       </span>
 
       {/* Name */}
-      <span className="truncate text-zinc-300">{node.data.name}</span>
+      <span className="truncate text-win-text">{node.data.name}</span>
 
       {/* Add to Context (on hover) */}
       {isDir ? (
         <button
           onClick={handleAddDirToContext}
-          className="ml-auto hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200 group-hover:flex items-center transition-colors"
-          title="Add directory to AI context"
+          className="ml-auto hidden shrink-0 rounded-md px-2 py-1 text-xs text-win-text-tertiary hover:bg-win-pressed hover:text-win-text group-hover:flex items-center transition-colors"
+          title="Add folder to chat context"
         >
-          + ctx
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
         </button>
       ) : (
         <button
           onClick={handleAddFileToContext}
-          className="ml-auto hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200 group-hover:flex items-center transition-colors"
-          title="Add file to AI context"
+          className="ml-auto hidden shrink-0 rounded-md px-2 py-1 text-xs text-win-text-tertiary hover:bg-win-pressed hover:text-win-text group-hover:flex items-center transition-colors"
+          title="Add file to chat"
         >
-          @
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+          </svg>
         </button>
       )}
     </div>

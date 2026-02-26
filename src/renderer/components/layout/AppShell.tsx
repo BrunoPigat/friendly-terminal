@@ -86,9 +86,8 @@ export default function AppShell() {
     // 2. There are no terminals
     // 3. We haven't already auto-created for this project
     if (activeProject && terminals.size === 0 && autoCreatedForProjectRef.current !== activeProject.path) {
-      console.log('[AppShell] ✅ CREATING auto terminal for project:', activeProject.name)
+      console.log('[AppShell] Creating auto terminal for project:', activeProject.name)
       const id = generateTerminalId()
-      console.log('[AppShell] Generated terminal ID:', id)
 
       addTerminal({
         id,
@@ -100,20 +99,11 @@ export default function AppShell() {
         isLoading: true
       })
       autoCreatedForProjectRef.current = activeProject.path
-      console.log('[AppShell] ✅ Terminal creation dispatched, ref updated to:', autoCreatedForProjectRef.current)
-    } else {
-      console.log('[AppShell] ❌ NOT creating terminal because:', {
-        hasActiveProject: !!activeProject,
-        terminalsSize: terminals.size,
-        autoCreatedFor: autoCreatedForProjectRef.current,
-        currentProjectPath: activeProject?.path
-      })
     }
 
     // Reset the ref if project changes or all terminals are closed
     const shouldReset = !activeProject || (activeProject && autoCreatedForProjectRef.current !== activeProject.path && autoCreatedForProjectRef.current !== null)
     if (shouldReset) {
-      console.log('[AppShell] 🔄 Resetting autoCreatedFor ref from', autoCreatedForProjectRef.current, 'to null')
       autoCreatedForProjectRef.current = null
     }
   }, [activeProject, terminals.size, addTerminal, defaultEngine])
@@ -176,27 +166,16 @@ export default function AppShell() {
 
   // No project selected → show welcome screen
   if (!activeProject) {
-    console.log('[AppShell] Rendering WelcomeScreen (no active project)')
     return (
-      <div className="flex h-full w-full flex-col bg-zinc-950 text-zinc-100">
+      <div className="flex h-full w-full flex-col bg-win-bg text-win-text">
         <TitleBar />
         <WelcomeScreen />
       </div>
     )
   }
 
-  console.log('[AppShell] Rendering main app shell', {
-    activeProject: activeProject.name,
-    activeTerminalId,
-    terminalsSize: terminals.size,
-    activeTerminal: activeTerminal ? {
-      id: activeTerminal.id,
-      name: activeTerminal.name
-    } : null
-  })
-
   return (
-    <div className="flex h-full w-full flex-col bg-zinc-950 text-zinc-100">
+    <div className="flex h-full w-full flex-col bg-win-bg text-win-text">
       <TitleBar />
 
       <div className="flex flex-1 overflow-hidden">
@@ -208,7 +187,7 @@ export default function AppShell() {
         {/* Resize handle */}
         {!sidebarCollapsed && (
           <div
-            className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-zinc-700 active:bg-zinc-600 transition-colors"
+            className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
             onMouseDown={handleResizeStart}
           />
         )}
@@ -225,7 +204,7 @@ export default function AppShell() {
                 cwd={activeTerminal.cwd}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-zinc-500 text-sm">
+              <div className="flex h-full items-center justify-center text-win-text-secondary text-sm">
                 No terminal open. Click + to create one.
               </div>
             )}
@@ -234,7 +213,7 @@ export default function AppShell() {
 
         {/* Right panel resize handle */}
         <div
-          className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-zinc-700 active:bg-zinc-600 transition-colors"
+          className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
           onMouseDown={handleRightResizeStart}
         />
 

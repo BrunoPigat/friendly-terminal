@@ -7,22 +7,21 @@ interface DiskListProps {
 
 /**
  * Lists available Windows drives (C:\, D:\, etc).
- * Click a drive to set it as the current root for the folder tree.
  */
 export default function DiskList({ selectedDisk, onSelectDisk }: DiskListProps) {
   const { disks, loading, error, refresh } = useDisks()
 
   if (loading) {
     return (
-      <div className="px-3 py-2 text-xs text-zinc-500">Loading drives...</div>
+      <div className="px-3 py-2 text-xs text-win-text-tertiary">Loading drives...</div>
     )
   }
 
   if (error) {
     return (
-      <div className="px-3 py-2 text-xs text-red-400">
+      <div className="px-3 py-2 text-xs text-red-600">
         {error}{' '}
-        <button onClick={refresh} className="underline hover:text-red-300">
+        <button onClick={refresh} className="underline hover:text-red-500">
           Retry
         </button>
       </div>
@@ -31,7 +30,7 @@ export default function DiskList({ selectedDisk, onSelectDisk }: DiskListProps) 
 
   if (disks.length === 0) {
     return (
-      <div className="px-3 py-2 text-xs text-zinc-500">No drives found.</div>
+      <div className="px-3 py-2 text-xs text-win-text-tertiary">No drives found.</div>
     )
   }
 
@@ -43,10 +42,10 @@ export default function DiskList({ selectedDisk, onSelectDisk }: DiskListProps) 
           <button
             key={disk.mount}
             onClick={() => onSelectDisk(disk.mount)}
-            className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
               isActive
-                ? 'bg-zinc-700 text-zinc-100'
-                : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                ? 'bg-win-accent text-white'
+                : 'bg-win-card text-win-text-secondary border border-win-border hover:bg-win-hover hover:text-win-text'
             }`}
             title={`${disk.name || disk.mount} (${formatSize(disk.size)})`}
           >
