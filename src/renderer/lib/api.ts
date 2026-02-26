@@ -83,6 +83,8 @@ interface IElectronAPI {
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>
 
+  onGuiAction: (callback: (payload: unknown) => void) => () => void
+
   windowMinimize: () => void
   windowMaximize: () => void
   windowClose: () => void

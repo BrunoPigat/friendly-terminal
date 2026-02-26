@@ -8,6 +8,7 @@ import { detectEngines, getAvailableEngines } from './ai-engines/engine-registry
 import { getCommand, isInSessionCommand } from './ai-engines/command-dictionary'
 import { registerConfigIpc } from './ai-engines/config-ipc'
 import { initAutoUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from './updater/auto-updater'
+import { startGuiServer, stopGuiServer } from './gui-control/gui-server'
 import { getProjectsDir } from './util/paths'
 
 const settingsStore = new Store({
@@ -150,6 +151,9 @@ app.whenReady().then(() => {
     registerFsIpc(mainWindow)
     registerPtyIpc(mainWindow)
     initAutoUpdater(mainWindow)
+    startGuiServer(mainWindow).catch((err) => {
+      console.error('[main] Failed to start GUI control server:', err)
+    })
 
     // Check for updates after a short delay to not block startup
     setTimeout(() => {
@@ -170,9 +174,10 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
-  // Kill all PTY processes and close watchers before quitting
+  // Kill all PTY processes, close watchers, and stop GUI server before quitting
   killAllPty()
   closeAllWatchers()
+  stopGuiServer()
 
   // On macOS, apps typically stay active until Cmd+Q
   if (process.platform !== 'darwin') {
@@ -182,4 +187,5 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   killAllPty()
+  stopGuiServer()
 })

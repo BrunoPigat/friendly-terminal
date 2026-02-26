@@ -1,9 +1,12 @@
 import { readdir, stat, mkdir, rm, writeFile } from 'fs/promises'
 import { join } from 'path'
+import { app } from 'electron'
 import { getProjectsDir, ensureDir } from '../util/paths'
 import { copyDefaultSkills } from './skills-manager'
 import { copyDefaultAgents } from './agents-manager'
 import { createDefaultInstructionFiles } from './engine-instructions'
+import { addMcpServer } from './mcp-config'
+import { getGuiPortFilePath } from '../gui-control/gui-server'
 
 export interface Project {
   name: string
@@ -70,6 +73,9 @@ export async function createProject(name: string): Promise<Project> {
   // Create default instruction files (CLAUDE.md, GEMINI.md)
   await createDefaultInstructionFiles(projectDir, name)
 
+  // Add default gui-control MCP server
+  await addDefaultGuiMcp(projectDir)
+
   const info = await stat(projectDir)
   console.log(`[project-manager] created project "${name}" at ${projectDir}`)
 
@@ -99,4 +105,38 @@ export async function deleteProject(name: string): Promise<boolean> {
  */
 export function getProjectPath(name: string): string {
   return join(getProjectsDir(), name)
+}
+
+/**
+ * Resolves the path to the gui-control MCP server script.
+ * In dev: <repo>/resources/default-projects/mcp-servers/gui-control/index.js
+ * In prod: <resourcesPath>/default-projects/mcp-servers/gui-control/index.js
+ */
+function getGuiMcpScriptPath(): string {
+  if (app.isPackaged) {
+    return join(process.resourcesPath, 'default-projects', 'mcp-servers', 'gui-control', 'index.js')
+  }
+  return join(app.getAppPath(), 'resources', 'default-projects', 'mcp-servers', 'gui-control', 'index.js')
+}
+
+/**
+ * Adds the default gui-control MCP server entry to a project.
+ */
+async function addDefaultGuiMcp(projectDir: string): Promise<void> {
+  try {
+    const scriptPath = getGuiMcpScriptPath()
+    const portFilePath = getGuiPortFilePath()
+
+    await addMcpServer(projectDir, 'gui-control', {
+      command: 'node',
+      args: [scriptPath],
+      env: {
+        YFT_GUI_PORT_FILE: portFilePath
+      }
+    })
+    console.log(`[project-manager] Added gui-control MCP server to ${projectDir}`)
+  } catch (err) {
+    // Don't fail project creation if MCP setup fails
+    console.error('[project-manager] Failed to add gui-control MCP:', err)
+  }
 }

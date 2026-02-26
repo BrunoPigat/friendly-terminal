@@ -10,7 +10,9 @@ const config: Configuration = {
   files: [
     'out/**/*',
     '!node_modules/**/*',
-    'node_modules/node-pty/**/*'
+    'node_modules/node-pty/**/*',
+    'node_modules/ws/**/*',
+    'node_modules/@modelcontextprotocol/**/*'
   ],
   extraResources: [
     {

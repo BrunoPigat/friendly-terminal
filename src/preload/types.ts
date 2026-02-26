@@ -100,6 +100,9 @@ export interface IElectronAPI {
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>
 
+  // GUI control
+  onGuiAction: (callback: (payload: unknown) => void) => () => void
+
   // Window controls
   windowMinimize: () => void
   windowMaximize: () => void

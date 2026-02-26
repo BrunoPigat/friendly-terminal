@@ -3,12 +3,15 @@ import type { EngineId } from '@/lib/constants'
 import { DEFAULT_SIDEBAR_WIDTH } from '@/lib/constants'
 import * as api from '@/lib/api'
 
+export type RightPanelTab = 'tips' | 'agents' | 'skills' | 'mcps'
+
 interface SettingsState {
   defaultEngine: EngineId
   sidebarWidth: number
   sidebarCollapsed: boolean
   rightPanelWidth: number
   rightPanelCollapsed: boolean
+  rightPanelActiveTab: RightPanelTab
   loaded: boolean
 
   loadSettings: () => Promise<void>
@@ -17,6 +20,8 @@ interface SettingsState {
   toggleSidebar: () => void
   setRightPanelWidth: (width: number) => void
   toggleRightPanel: () => void
+  setRightPanelActiveTab: (tab: RightPanelTab) => void
+  setRightPanelCollapsed: (collapsed: boolean) => void
 }
 
 interface SettingsData {
@@ -33,6 +38,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   sidebarCollapsed: false,
   rightPanelWidth: 280,
   rightPanelCollapsed: false,
+  rightPanelActiveTab: 'tips',
   loaded: false,
 
   loadSettings: async () => {
@@ -81,5 +87,13 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
   toggleRightPanel: () => {
     set((state) => ({ rightPanelCollapsed: !state.rightPanelCollapsed }))
+  },
+
+  setRightPanelActiveTab: (tab) => {
+    set({ rightPanelActiveTab: tab })
+  },
+
+  setRightPanelCollapsed: (collapsed) => {
+    set({ rightPanelCollapsed: collapsed })
   }
 }))

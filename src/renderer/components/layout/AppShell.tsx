@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
+import { useGuiActions } from '@/hooks/useGuiActions'
 import TitleBar from '@/components/layout/TitleBar'
 import Sidebar from '@/components/layout/Sidebar'
 import FileBrowser from '@/components/sidebar/FileBrowser'
@@ -23,6 +24,9 @@ export default function AppShell() {
 
   const rightPanelCollapsed = useSettingsStore((s) => s.rightPanelCollapsed)
   const setRightPanelWidth = useSettingsStore((s) => s.setRightPanelWidth)
+
+  // Mount GUI actions listener (MCP server → renderer)
+  useGuiActions()
 
   const activeProject = useProjectStore((s) => s.activeProject)
 

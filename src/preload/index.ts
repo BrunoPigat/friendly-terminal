@@ -54,6 +54,13 @@ const api: IElectronAPI = {
   getSetting: (key) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key, value) => ipcRenderer.invoke('settings:set', key, value),
 
+  // GUI control
+  onGuiAction: (callback) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: unknown) => callback(payload)
+    ipcRenderer.on('gui:action', listener)
+    return () => ipcRenderer.removeListener('gui:action', listener)
+  },
+
   // Window controls
   windowMinimize: () => ipcRenderer.send('window:minimize'),
   windowMaximize: () => ipcRenderer.send('window:maximize'),

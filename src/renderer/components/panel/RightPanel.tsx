@@ -1,13 +1,11 @@
-import { useState, useCallback } from 'react'
-import { useSettingsStore } from '@/stores/settings-store'
+import { useCallback } from 'react'
+import { useSettingsStore, type RightPanelTab } from '@/stores/settings-store'
 import TipsPanel from './TipsPanel'
 import AgentList from './AgentList'
 import SkillList from './SkillList'
 import MCPPanel from './MCPPanel'
 
-type Tab = 'tips' | 'agents' | 'skills' | 'mcps'
-
-const TABS: { id: Tab; label: string }[] = [
+const TABS: { id: RightPanelTab; label: string }[] = [
   { id: 'tips', label: 'Tips' },
   { id: 'agents', label: 'Agents' },
   { id: 'skills', label: 'Skills' },
@@ -18,7 +16,8 @@ export default function RightPanel() {
   const collapsed = useSettingsStore((s) => s.rightPanelCollapsed)
   const panelWidth = useSettingsStore((s) => s.rightPanelWidth)
   const toggleRightPanel = useSettingsStore((s) => s.toggleRightPanel)
-  const [activeTab, setActiveTab] = useState<Tab>('tips')
+  const activeTab = useSettingsStore((s) => s.rightPanelActiveTab)
+  const setActiveTab = useSettingsStore((s) => s.setRightPanelActiveTab)
 
   const handleToggle = useCallback(() => {
     toggleRightPanel()

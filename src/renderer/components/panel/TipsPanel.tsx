@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useProjectStore } from '@/stores/project-store'
 import { useTerminalStore } from '@/stores/terminal-store'
+import { useSettingsStore } from '@/stores/settings-store'
 import * as api from '@/lib/api'
 
 /**
@@ -116,7 +117,14 @@ export default function TipsPanel() {
       const normalizedChanged = changedDir.replace(/\\/g, '/')
       const normalizedRoot = projectPath.replace(/\\/g, '/')
       if (normalizedChanged === normalizedRoot || changedDir === projectPath) {
-        api.readFile(tipsPath).then((text) => setContent(text)).catch(() => setContent(null))
+        api.readFile(tipsPath).then((text) => {
+          setContent(text)
+          // Auto-switch to Tips tab and open panel when tips.md changes
+          if (text !== null) {
+            useSettingsStore.getState().setRightPanelActiveTab('tips')
+            useSettingsStore.getState().setRightPanelCollapsed(false)
+          }
+        }).catch(() => setContent(null))
       }
     })
 
