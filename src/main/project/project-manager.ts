@@ -1,4 +1,4 @@
-import { readdir, stat, mkdir, rm, writeFile } from 'fs/promises'
+import { readdir, stat, mkdir, rm, writeFile, readFile } from 'fs/promises'
 import { join } from 'path'
 import { app } from 'electron'
 import { getProjectsDir, ensureDir } from '../util/paths'
@@ -76,6 +76,9 @@ export async function createProject(name: string): Promise<Project> {
   // Add default gui-control MCP server
   await addDefaultGuiMcp(projectDir)
 
+  // Set default permissions for each engine
+  await createDefaultPermissions(projectDir)
+
   const info = await stat(projectDir)
   console.log(`[project-manager] created project "${name}" at ${projectDir}`)
 
@@ -138,5 +141,68 @@ async function addDefaultGuiMcp(projectDir: string): Promise<void> {
   } catch (err) {
     // Don't fail project creation if MCP setup fails
     console.error('[project-manager] Failed to add gui-control MCP:', err)
+  }
+}
+
+/**
+ * Creates default permission settings for each engine.
+ *
+ * Claude: .claude/settings.local.json — allows all gui-control MCP tools
+ * Gemini: .gemini/settings.json — sets trust:true on gui-control server
+ */
+async function createDefaultPermissions(projectDir: string): Promise<void> {
+  // Claude: allow all gui-control MCP tools via permissions.allow
+  try {
+    const claudeDir = join(projectDir, '.claude')
+    await ensureDir(claudeDir)
+    const claudeSettingsPath = join(claudeDir, 'settings.local.json')
+
+    let existing: Record<string, unknown> = {}
+    try {
+      const raw = await readFile(claudeSettingsPath, 'utf-8')
+      existing = JSON.parse(raw)
+    } catch {
+      // File doesn't exist yet
+    }
+
+    const permissions = (existing.permissions as Record<string, unknown>) || {}
+    const currentAllow = (permissions.allow as string[]) || []
+
+    // Add gui-control MCP wildcard if not already present
+    const guiPattern = 'mcp__gui-control__*'
+    if (!currentAllow.includes(guiPattern)) {
+      currentAllow.push(guiPattern)
+    }
+
+    existing.permissions = { ...permissions, allow: currentAllow }
+    await writeFile(claudeSettingsPath, JSON.stringify(existing, null, 2), 'utf-8')
+    console.log(`[project-manager] Created Claude default permissions at ${claudeSettingsPath}`)
+  } catch (err) {
+    console.error('[project-manager] Failed to create Claude permissions:', err)
+  }
+
+  // Gemini: set trust:true on gui-control MCP server
+  try {
+    const geminiDir = join(projectDir, '.gemini')
+    const geminiSettingsPath = join(geminiDir, 'settings.json')
+
+    let existing: Record<string, unknown> = {}
+    try {
+      const raw = await readFile(geminiSettingsPath, 'utf-8')
+      existing = JSON.parse(raw)
+    } catch {
+      // File doesn't exist yet — will be created by MCP sync
+      return
+    }
+
+    const mcpServers = (existing.mcpServers as Record<string, Record<string, unknown>>) || {}
+    if (mcpServers['gui-control']) {
+      mcpServers['gui-control'].trust = true
+      existing.mcpServers = mcpServers
+      await writeFile(geminiSettingsPath, JSON.stringify(existing, null, 2), 'utf-8')
+      console.log(`[project-manager] Set Gemini gui-control trust:true at ${geminiSettingsPath}`)
+    }
+  } catch (err) {
+    console.error('[project-manager] Failed to update Gemini permissions:', err)
   }
 }

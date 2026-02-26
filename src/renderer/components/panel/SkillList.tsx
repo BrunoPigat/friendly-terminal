@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import * as api from '@/lib/api'
@@ -10,32 +10,45 @@ export default function SkillList() {
   const [skills, setSkills] = useState<SkillEntry[]>([])
   const [loading, setLoading] = useState(false)
 
+  const loadSkills = useCallback(
+    (projectPath: string) => {
+      api.listSkills(defaultEngine, projectPath)
+        .then((result) => {
+          setSkills(result)
+          setLoading(false)
+        })
+        .catch((err) => {
+          console.warn('[SkillList] Failed to load skills:', err)
+          setSkills([])
+          setLoading(false)
+        })
+    },
+    [defaultEngine]
+  )
+
   useEffect(() => {
     if (!activeProject) {
       setSkills([])
       return
     }
 
-    let cancelled = false
     setLoading(true)
+    loadSkills(activeProject.path)
 
-    api.listSkills(defaultEngine, activeProject.path)
-      .then((result) => {
-        if (!cancelled) {
-          setSkills(result)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        console.warn('[SkillList] Failed to load skills:', err)
-        if (!cancelled) {
-          setSkills([])
-          setLoading(false)
-        }
-      })
+    // Watch for filesystem changes in skills directories
+    const engineDir = defaultEngine === 'gemini' ? '.gemini' : '.claude'
+    const skillsDirSuffix = `/${engineDir}/skills`
 
-    return () => { cancelled = true }
-  }, [activeProject, defaultEngine])
+    const unsub = api.onFsChanged((rootPath, changedDir) => {
+      if (rootPath !== activeProject.path) return
+      const normalized = changedDir.replace(/\\/g, '/')
+      if (normalized.includes(skillsDirSuffix) || normalized.includes(`/${engineDir}/commands`)) {
+        loadSkills(activeProject.path)
+      }
+    })
+
+    return () => { unsub() }
+  }, [activeProject, defaultEngine, loadSkills])
 
   if (!activeProject) {
     return (

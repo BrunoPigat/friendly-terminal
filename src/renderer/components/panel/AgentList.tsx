@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import * as api from '@/lib/api'
@@ -10,32 +10,45 @@ export default function AgentList() {
   const [agents, setAgents] = useState<AgentEntry[]>([])
   const [loading, setLoading] = useState(false)
 
+  const loadAgents = useCallback(
+    (projectPath: string) => {
+      api.listAgents(defaultEngine, projectPath)
+        .then((result) => {
+          setAgents(result)
+          setLoading(false)
+        })
+        .catch((err) => {
+          console.warn('[AgentList] Failed to load agents:', err)
+          setAgents([])
+          setLoading(false)
+        })
+    },
+    [defaultEngine]
+  )
+
   useEffect(() => {
     if (!activeProject) {
       setAgents([])
       return
     }
 
-    let cancelled = false
     setLoading(true)
+    loadAgents(activeProject.path)
 
-    api.listAgents(defaultEngine, activeProject.path)
-      .then((result) => {
-        if (!cancelled) {
-          setAgents(result)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        console.warn('[AgentList] Failed to load agents:', err)
-        if (!cancelled) {
-          setAgents([])
-          setLoading(false)
-        }
-      })
+    // Watch for filesystem changes in agents directories
+    const engineDir = defaultEngine === 'gemini' ? '.gemini' : '.claude'
+    const agentsDirSuffix = `/${engineDir}/agents`
 
-    return () => { cancelled = true }
-  }, [activeProject, defaultEngine])
+    const unsub = api.onFsChanged((rootPath, changedDir) => {
+      if (rootPath !== activeProject.path) return
+      const normalized = changedDir.replace(/\\/g, '/')
+      if (normalized.includes(agentsDirSuffix)) {
+        loadAgents(activeProject.path)
+      }
+    })
+
+    return () => { unsub() }
+  }, [activeProject, defaultEngine, loadAgents])
 
   if (!activeProject) {
     return (

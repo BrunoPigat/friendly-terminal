@@ -69,24 +69,37 @@ export default function FolderTree({ rootPath, filter }: FolderTreeProps) {
           node.children === null ? [] : node.children ?? undefined
         }
       >
-        {(props: NodeRendererProps<FileNode>) => <FolderNode {...props} />}
+        {(props: NodeRendererProps<FileNode>) => <FolderNode {...props} rootPath={rootPath} />}
       </Tree>
     </div>
   )
 }
 
-function FolderNode({ node, style }: NodeRendererProps<FileNode>) {
+function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { rootPath: string | null }) {
   const activeTerminalId = useTerminalStore((s) => s.activeTerminalId)
 
   const handleClick = useCallback(() => {
     if (node.data.isDirectory) {
-      // Toggle expand for directories
       node.toggle()
     }
-    // File click: future feature — open in editor
   }, [node])
 
-  const handleAddToContext = useCallback(
+  /** Compute path relative to project root, using forward slashes */
+  const getRelativePath = useCallback(
+    (absolutePath: string) => {
+      if (!rootPath) return absolutePath
+      // Normalize separators to forward slashes for comparison
+      const normRoot = rootPath.replace(/\\/g, '/').replace(/\/$/, '')
+      const normPath = absolutePath.replace(/\\/g, '/')
+      if (normPath.startsWith(normRoot + '/')) {
+        return normPath.slice(normRoot.length + 1)
+      }
+      return normPath
+    },
+    [rootPath]
+  )
+
+  const handleAddDirToContext = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation()
       if (!activeTerminalId) return
@@ -94,6 +107,20 @@ function FolderNode({ node, style }: NodeRendererProps<FileNode>) {
       api.ptyWrite(activeTerminalId, command)
     },
     [activeTerminalId, node.data.path]
+  )
+
+  const handleAddFileToContext = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (!activeTerminalId) return
+      // Both Claude and Gemini use @filePath to reference files in context
+      // Use project-relative path (e.g. @src/index.ts, not @C:\full\path)
+      // Don't send newline — let the user continue composing their message
+      const relativePath = getRelativePath(node.data.path)
+      const ref = `@${relativePath} `
+      api.ptyWrite(activeTerminalId, ref)
+    },
+    [activeTerminalId, node.data.path, getRelativePath]
   )
 
   const isDir = node.data.isDirectory
@@ -136,14 +163,22 @@ function FolderNode({ node, style }: NodeRendererProps<FileNode>) {
       {/* Name */}
       <span className="truncate text-zinc-300">{node.data.name}</span>
 
-      {/* Add to Context (dirs only, on hover) */}
-      {isDir && (
+      {/* Add to Context (on hover) */}
+      {isDir ? (
         <button
-          onClick={handleAddToContext}
+          onClick={handleAddDirToContext}
           className="ml-auto hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200 group-hover:flex items-center transition-colors"
           title="Add directory to AI context"
         >
           + ctx
+        </button>
+      ) : (
+        <button
+          onClick={handleAddFileToContext}
+          className="ml-auto hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200 group-hover:flex items-center transition-colors"
+          title="Add file to AI context"
+        >
+          @
         </button>
       )}
     </div>

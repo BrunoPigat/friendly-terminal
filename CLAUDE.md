@@ -45,7 +45,7 @@ npm run lint             # Run ESLint
 
 #### AI Engine Integration (`src/main/ai-engines/`)
 - `engine-registry.ts`: Detects available AI CLI tools (claude, gemini) via PATH lookup
-- `command-dictionary.ts`: Maps high-level intents (start-session, add-mcp) to engine-specific commands
+- `command-dictionary.ts`: Maps high-level intents (start-session, add-file, add-mcp) to engine-specific commands
 - `claude-engine.ts` / `gemini-engine.ts`: Engine-specific configuration
 - Commands are either **shell-level** (spawn new process) or **in-session** (slash commands typed into REPL)
 
@@ -103,6 +103,21 @@ When starting a chat session:
 - Stored in project root as `.mcp.json` with format: `{ "mcpServers": { "name": { "command": "...", "args": [...], "env": {...} } } }`
 - Also synced to `.gemini/settings.json` for Gemini CLI
 - Can be edited via UI (MCPServerForm component) or manually
+
+### Default Permissions
+On project creation, `createDefaultPermissions()` auto-allows GUI MCP tools per engine:
+- **Claude**: `.claude/settings.local.json` → `permissions.allow: ["mcp__gui-control__*"]`
+- **Gemini**: `.gemini/settings.json` → `trust: true` on the gui-control server entry
+
+### File Browser Context Integration
+- Files show an `@` button on hover → writes `@<project-relative-path> ` into the active terminal (no newline, user continues composing)
+- Directories show `+ ctx` button → writes `/add-dir <path>\n` (executes immediately)
+- Both Claude and Gemini use the `@filePath` syntax for file context references
+- Paths are relative to the project root with forward slashes (e.g., `@src/index.ts`)
+
+### Live Panel Reloading
+- Skills and Agents tabs auto-reload when files change in their respective directories (`.claude/skills/`, `.claude/agents/`, etc.)
+- Uses the existing recursive `fs:watch` on the project root + `fs:changed` event filtering
 
 ## Project Structure
 

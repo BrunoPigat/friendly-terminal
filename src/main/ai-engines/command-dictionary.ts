@@ -2,6 +2,7 @@ export type CommandIntent =
   | 'start-session'
   | 'continue-session'
   | 'add-dir'
+  | 'add-file'
   | 'add-mcp'
   | 'list-mcp'
   | 'remove-mcp'
@@ -12,6 +13,8 @@ export interface CommandParams {
   cwd?: string
   /** Path to add as allowed directory */
   dirPath?: string
+  /** Path to a file to add as context */
+  filePath?: string
   /** MCP server name */
   mcpName?: string
   /** MCP server command */
@@ -44,6 +47,10 @@ const COMMAND_MAP: Record<string, Record<CommandIntent, CommandTemplate>> = {
       template: '/add-dir {dirPath}',
       isInSession: true
     },
+    'add-file': {
+      template: '@{filePath}',
+      isInSession: true
+    },
     'add-mcp': {
       template: '/mcp add {mcpName} {mcpCommand}',
       isInSession: true
@@ -72,6 +79,10 @@ const COMMAND_MAP: Record<string, Record<CommandIntent, CommandTemplate>> = {
     },
     'add-dir': {
       template: '/add-dir {dirPath}',
+      isInSession: true
+    },
+    'add-file': {
+      template: '@{filePath}',
       isInSession: true
     },
     'add-mcp': {
@@ -103,6 +114,7 @@ function interpolate(template: string, params?: CommandParams): string {
   let result = template
   if (params.cwd) result = result.replace('{cwd}', params.cwd)
   if (params.dirPath) result = result.replace('{dirPath}', params.dirPath)
+  if (params.filePath) result = result.replace('{filePath}', params.filePath)
   if (params.mcpName) result = result.replace('{mcpName}', params.mcpName)
   if (params.mcpCommand) result = result.replace('{mcpCommand}', params.mcpCommand)
 
