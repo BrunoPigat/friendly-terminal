@@ -33,6 +33,23 @@ export interface PtySpawnOptions {
   rows?: number
 }
 
+export interface GitStatus {
+  isRepo: boolean
+  branch: string
+  ahead: number
+  behind: number
+  staged: number
+  modified: number
+  untracked: number
+  hasRemote: boolean
+}
+
+export interface GitFileChange {
+  path: string
+  status: 'modified' | 'added' | 'deleted' | 'untracked' | 'renamed'
+  staged: boolean
+}
+
 export interface AgentEntry {
   name: string
   description: string
@@ -83,6 +100,19 @@ interface IElectronAPI {
   getCommand: (engineId: string, intent: string, params?: Record<string, string>) => Promise<string>
   listAgents: (engineId: string, projectPath: string) => Promise<AgentEntry[]>
   listSkills: (engineId: string, projectPath: string) => Promise<SkillEntry[]>
+
+  gitAvailable: () => Promise<boolean>
+  gitStatus: (cwd: string) => Promise<GitStatus>
+  gitChangedFiles: (cwd: string) => Promise<GitFileChange[]>
+  gitAdd: (cwd: string, files: string[]) => Promise<void>
+  gitCommit: (cwd: string, message: string) => Promise<string>
+  gitPush: (cwd: string, remote?: string, branch?: string) => Promise<string>
+  gitPull: (cwd: string) => Promise<string>
+  gitInit: (cwd: string) => Promise<string>
+  gitConfigGet: (key: string) => Promise<string | null>
+  gitConfigSet: (key: string, value: string) => Promise<void>
+
+  getAppVersion: () => Promise<string>
 
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>
@@ -150,6 +180,21 @@ export const listSkills = async (engineId: string, projectPath: string) => {
   if (typeof fn !== 'function') return []
   return fn(engineId, projectPath)
 }
+
+// Git
+export const gitAvailable = () => getApi().gitAvailable()
+export const gitStatus = (cwd: string) => getApi().gitStatus(cwd)
+export const gitChangedFiles = (cwd: string) => getApi().gitChangedFiles(cwd)
+export const gitAdd = (cwd: string, files: string[]) => getApi().gitAdd(cwd, files)
+export const gitCommit = (cwd: string, message: string) => getApi().gitCommit(cwd, message)
+export const gitPush = (cwd: string, remote?: string, branch?: string) => getApi().gitPush(cwd, remote, branch)
+export const gitPull = (cwd: string) => getApi().gitPull(cwd)
+export const gitInit = (cwd: string) => getApi().gitInit(cwd)
+export const gitConfigGet = (key: string) => getApi().gitConfigGet(key)
+export const gitConfigSet = (key: string, value: string) => getApi().gitConfigSet(key, value)
+
+// App
+export const getAppVersion = () => getApi().getAppVersion()
 
 // Settings
 export const getSetting = (key: string) => getApi().getSetting(key)

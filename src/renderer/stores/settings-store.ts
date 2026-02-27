@@ -3,7 +3,7 @@ import type { EngineId } from '@/lib/constants'
 import { DEFAULT_SIDEBAR_WIDTH } from '@/lib/constants'
 import * as api from '@/lib/api'
 
-export type RightPanelTab = 'tips' | 'agents' | 'skills' | 'mcps'
+export type RightPanelTab = 'tips' | 'agents' | 'skills' | 'mcps' | 'git'
 
 interface SettingsState {
   defaultEngine: EngineId
@@ -12,6 +12,7 @@ interface SettingsState {
   rightPanelWidth: number
   rightPanelActiveTab: RightPanelTab
   minifiedView: boolean
+  showSettingsDialog: boolean
   loaded: boolean
 
   loadSettings: () => Promise<void>
@@ -21,6 +22,7 @@ interface SettingsState {
   setRightPanelWidth: (width: number) => void
   setRightPanelActiveTab: (tab: RightPanelTab) => void
   toggleMinifiedView: () => void
+  setShowSettingsDialog: (show: boolean) => void
 }
 
 interface SettingsData {
@@ -34,9 +36,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   defaultEngine: 'claude',
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
   sidebarCollapsed: false,
-  rightPanelWidth: 340,
+  rightPanelWidth: 400,
   rightPanelActiveTab: 'tips',
   minifiedView: false,
+  showSettingsDialog: false,
   loaded: false,
 
   loadSettings: async () => {
@@ -83,6 +86,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
   setRightPanelActiveTab: (tab) => {
     set({ rightPanelActiveTab: tab })
+  },
+
+  setShowSettingsDialog: (show) => {
+    set({ showSettingsDialog: show })
   },
 
   toggleMinifiedView: () => {

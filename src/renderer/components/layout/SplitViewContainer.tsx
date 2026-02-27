@@ -10,6 +10,7 @@ import FileBrowser from '@/components/sidebar/FileBrowser'
 import TerminalToolbar from '@/components/terminal/TerminalToolbar'
 import TerminalGrid from '@/components/terminal/TerminalGrid'
 import RightPanel from '@/components/panel/RightPanel'
+import SettingsDialog from '@/components/settings/SettingsDialog'
 import CompactProjectPanel from './CompactProjectPanel'
 import PanelDivider from './PanelDivider'
 
@@ -240,6 +241,9 @@ export default function SplitViewContainer() {
           {!effectiveMinified && <RightPanel />}
         </div>
       </div>
+
+      {/* Settings dialog (rendered as overlay) */}
+      <SettingsDialog />
     </div>
   )
 }

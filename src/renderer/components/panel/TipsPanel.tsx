@@ -41,15 +41,19 @@ function ChatBubble({
   }, [activeTerminalId, content])
 
   return (
-    <div className="flex flex-col gap-1.5" style={{ animationDelay: `${index * 80}ms` }}>
-      {/* Bubble */}
-      <div className="rounded-lg bg-win-accent-subtle border border-win-accent/15 px-5 py-3.5">
+    <div className="flex flex-col items-start gap-1" style={{ animationDelay: `${index * 80}ms` }}>
+      {/* SMS Bubble */}
+      <div className="relative max-w-[90%] rounded-2xl rounded-bl-sm bg-[#d9ecff] px-4 py-2.5 shadow-sm border border-[#b8d4f0]/50">
+        {/* Tail */}
+        <div className="absolute -bottom-0 -left-1.5 w-3 h-3 overflow-hidden">
+          <div className="absolute -right-2 top-0 w-4 h-4 bg-[#d9ecff] rounded-br-xl" />
+        </div>
         <div className="prose prose-sm max-w-none
           prose-p:text-sm prose-p:leading-relaxed prose-p:text-win-text prose-p:m-0
           prose-a:text-win-accent prose-a:no-underline hover:prose-a:underline
-          prose-code:text-xs prose-code:bg-white prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-win-accent-dark prose-code:font-mono prose-code:border prose-code:border-win-border
-          prose-pre:bg-white prose-pre:border prose-pre:border-win-border prose-pre:rounded prose-pre:text-xs
-          prose-ul:text-sm prose-ul:text-win-text prose-ul:my-1.5 prose-ol:text-sm prose-ol:text-win-text prose-ol:my-1.5
+          prose-code:text-xs prose-code:bg-white/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-win-accent-dark prose-code:font-mono prose-code:border prose-code:border-win-border/50
+          prose-pre:bg-white/50 prose-pre:border prose-pre:border-win-border/50 prose-pre:rounded prose-pre:text-xs
+          prose-ul:text-sm prose-ul:text-win-text prose-ul:my-1 prose-ol:text-sm prose-ol:text-win-text prose-ol:my-1
           prose-li:text-sm prose-li:text-win-text prose-li:my-0.5
           prose-strong:text-win-text
           prose-em:text-win-text-secondary">
@@ -60,14 +64,14 @@ function ChatBubble({
       {activeTerminalId && (
         <button
           onClick={handleSend}
-          className="self-start flex items-center gap-1.5 rounded-md border border-win-border bg-win-card px-3 py-1.5
-            text-xs font-medium text-win-text-secondary hover:bg-win-accent hover:text-white hover:border-win-accent transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 rounded-full border border-win-border bg-win-card px-3 py-1
+            text-[11px] font-medium text-win-text-secondary hover:bg-win-accent hover:text-white hover:border-win-accent transition-colors cursor-pointer"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          Send to chat
+          Send
         </button>
       )}
     </div>
@@ -186,7 +190,7 @@ export default function TipsPanel() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 overflow-y-auto">
+    <div className="flex flex-col gap-3 p-4 pr-3 overflow-y-auto">
       {messages.map((msg, i) => (
         <ChatBubble key={i} content={msg} index={i} activeTerminalId={activeTerminalId} />
       ))}

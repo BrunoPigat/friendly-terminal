@@ -55,6 +55,21 @@ const api: IElectronAPI = {
   listAgents: (engineId, projectPath) => ipcRenderer.invoke('engines:list-agents', engineId, projectPath),
   listSkills: (engineId, projectPath) => ipcRenderer.invoke('engines:list-skills', engineId, projectPath),
 
+  // Git
+  gitAvailable: () => ipcRenderer.invoke('git:available'),
+  gitStatus: (cwd) => ipcRenderer.invoke('git:status', cwd),
+  gitChangedFiles: (cwd) => ipcRenderer.invoke('git:changed-files', cwd),
+  gitAdd: (cwd, files) => ipcRenderer.invoke('git:add', cwd, files),
+  gitCommit: (cwd, message) => ipcRenderer.invoke('git:commit', cwd, message),
+  gitPush: (cwd, remote, branch) => ipcRenderer.invoke('git:push', cwd, remote, branch),
+  gitPull: (cwd) => ipcRenderer.invoke('git:pull', cwd),
+  gitInit: (cwd) => ipcRenderer.invoke('git:init', cwd),
+  gitConfigGet: (key) => ipcRenderer.invoke('git:config-get', key),
+  gitConfigSet: (key, value) => ipcRenderer.invoke('git:config-set', key, value),
+
+  // App
+  getAppVersion: () => ipcRenderer.invoke('app:version'),
+
   // Settings
   getSetting: (key) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key, value) => ipcRenderer.invoke('settings:set', key, value),

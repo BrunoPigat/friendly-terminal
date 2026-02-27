@@ -51,6 +51,23 @@ export interface SkillEntry {
   filePath: string
 }
 
+export interface GitStatus {
+  isRepo: boolean
+  branch: string
+  ahead: number
+  behind: number
+  staged: number
+  modified: number
+  untracked: number
+  hasRemote: boolean
+}
+
+export interface GitFileChange {
+  path: string
+  status: 'modified' | 'added' | 'deleted' | 'untracked' | 'renamed'
+  staged: boolean
+}
+
 export interface PtySpawnOptions {
   shell?: string
   cwd?: string
@@ -100,6 +117,21 @@ export interface IElectronAPI {
   getCommand: (engineId: string, intent: string, params?: Record<string, string>) => Promise<string>
   listAgents: (engineId: string, projectPath: string) => Promise<AgentEntry[]>
   listSkills: (engineId: string, projectPath: string) => Promise<SkillEntry[]>
+
+  // Git
+  gitAvailable: () => Promise<boolean>
+  gitStatus: (cwd: string) => Promise<GitStatus>
+  gitChangedFiles: (cwd: string) => Promise<GitFileChange[]>
+  gitAdd: (cwd: string, files: string[]) => Promise<void>
+  gitCommit: (cwd: string, message: string) => Promise<string>
+  gitPush: (cwd: string, remote?: string, branch?: string) => Promise<string>
+  gitPull: (cwd: string) => Promise<string>
+  gitInit: (cwd: string) => Promise<string>
+  gitConfigGet: (key: string) => Promise<string | null>
+  gitConfigSet: (key: string, value: string) => Promise<void>
+
+  // App
+  getAppVersion: () => Promise<string>
 
   // Settings
   getSetting: (key: string) => Promise<unknown>

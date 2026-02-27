@@ -9,6 +9,7 @@ import { getCommand, isInSessionCommand } from './ai-engines/command-dictionary'
 import { registerConfigIpc } from './ai-engines/config-ipc'
 import { initAutoUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from './updater/auto-updater'
 import { startGuiServer, stopGuiServer } from './gui-control/gui-server'
+import { registerGitIpc } from './git/git-ipc'
 import { getProjectsDir } from './util/paths'
 
 const settingsStore = new Store({
@@ -17,7 +18,7 @@ const settingsStore = new Store({
     defaultEngine: 'claude',
     sidebarWidth: 280,
     sidebarCollapsed: false,
-    rightPanelWidth: 280
+    rightPanelWidth: 400
   }
 })
 
@@ -177,6 +178,9 @@ function registerGlobalIpc(): void {
     return isInSessionCommand(intent as Parameters<typeof isInSessionCommand>[0])
   })
 
+  // App info
+  ipcMain.handle('app:version', () => app.getVersion())
+
   // Updater controls
   ipcMain.handle('updater:check', async () => {
     await checkForUpdates()
@@ -287,6 +291,7 @@ app.whenReady().then(() => {
   registerGlobalIpc()
   registerProjectIpc()
   registerConfigIpc()
+  registerGitIpc()
 
   // Create the main window
   createWindow()
