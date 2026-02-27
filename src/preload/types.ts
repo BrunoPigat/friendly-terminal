@@ -17,6 +17,7 @@ export interface Project {
   name: string
   path: string
   createdAt: string
+  imported: boolean
 }
 
 export interface McpServer {

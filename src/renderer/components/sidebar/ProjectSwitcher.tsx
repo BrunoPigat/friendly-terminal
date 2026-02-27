@@ -16,7 +16,7 @@ export default function ProjectSwitcher() {
 
   const [open, setOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<typeof projects[number] | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown when clicking outside
@@ -44,10 +44,10 @@ export default function ProjectSwitcher() {
     setDialogOpen(true)
   }, [])
 
-  const handleDeleteClick = useCallback((e: React.MouseEvent, projectName: string) => {
+  const handleDeleteClick = useCallback((e: React.MouseEvent, project: typeof projects[number]) => {
     e.stopPropagation()
     setOpen(false)
-    setDeleteTarget(projectName)
+    setDeleteTarget(project)
   }, [])
 
   return (
@@ -96,7 +96,7 @@ export default function ProjectSwitcher() {
                   {project.name}
                 </button>
                 <button
-                  onClick={(e) => handleDeleteClick(e, project.name)}
+                  onClick={(e) => handleDeleteClick(e, project)}
                   className="shrink-0 mr-1.5 flex h-5 w-5 items-center justify-center rounded text-win-text-tertiary opacity-0 group-hover/item:opacity-100 hover:text-red-600 transition-all"
                   title={`Delete ${project.name}`}
                 >
@@ -153,7 +153,8 @@ export default function ProjectSwitcher() {
       {/* Delete confirmation dialog */}
       {deleteTarget && (
         <DeleteProjectDialog
-          projectName={deleteTarget}
+          projectName={deleteTarget.name}
+          imported={deleteTarget.imported}
           onClose={() => setDeleteTarget(null)}
         />
       )}

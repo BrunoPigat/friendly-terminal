@@ -203,6 +203,7 @@ export default function GitPanel() {
             Working tree clean
           </div>
         )}
+
       </div>
 
       {/* Action buttons */}
@@ -250,6 +251,9 @@ export default function GitPanel() {
             <ActionButton onClick={handlePull} disabled={loading} label={status.behind > 0 ? `Pull (${status.behind})` : 'Pull'} />
           </div>
         )}
+
+        {/* Friendly help guide */}
+        <GitHelpGuide hasRemote={status.hasRemote} />
       </div>
 
       {/* Loading overlay */}
@@ -310,5 +314,87 @@ function ActionButton({ onClick, disabled, label, primary }: { onClick: () => vo
     >
       {label}
     </button>
+  )
+}
+
+function GitHelpGuide({ hasRemote }: { hasRemote: boolean }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div className="mx-3 my-3">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 text-[11px] text-win-text-tertiary hover:text-win-text-secondary transition-colors"
+      >
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`transition-transform ${expanded ? 'rotate-90' : ''}`}
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+        What do these buttons do?
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-2.5 text-[11px] leading-relaxed text-win-text-secondary">
+          <HelpEntry
+            letter="+"
+            letterClass="text-green-400"
+            title="Stage (the + button on each file)"
+            desc="Marks a file to be included in your next save point. Think of it as putting files in a box before sealing it."
+          />
+          <HelpEntry
+            letter="S"
+            letterClass="text-blue-400"
+            title="Save All"
+            desc="Stages every changed file at once — puts everything in the box in one go."
+          />
+          <HelpEntry
+            letter="C"
+            letterClass="text-win-accent"
+            title="Commit the save files"
+            desc="Creates a save point with a short message describing what you changed. Like taking a snapshot of your project that you can go back to later."
+          />
+          {hasRemote && (
+            <>
+              <HelpEntry
+                letter="↑"
+                letterClass="text-emerald-400"
+                title="Push"
+                desc="Sends your saved snapshots to the cloud (GitHub, GitLab, etc.) so others can see your changes and they're backed up online."
+              />
+              <HelpEntry
+                letter="↓"
+                letterClass="text-amber-400"
+                title="Pull"
+                desc="Downloads the latest changes that others pushed to the cloud, so your local copy stays up to date."
+              />
+            </>
+          )}
+          <div className="border-t border-win-border/50 pt-2 text-[10px] text-win-text-tertiary leading-relaxed">
+            <span className="font-medium">Typical flow:</span> make changes → Save All → write a message → Commit{hasRemote ? ' → Push' : ''}.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function HelpEntry({ letter, letterClass, title, desc }: { letter: string; letterClass: string; title: string; desc: string }) {
+  return (
+    <div className="flex gap-2">
+      <span className={`w-3.5 shrink-0 text-center font-mono font-bold ${letterClass}`}>{letter}</span>
+      <div>
+        <p className="font-medium text-win-text">{title}</p>
+        <p className="text-win-text-tertiary">{desc}</p>
+      </div>
+    </div>
   )
 }

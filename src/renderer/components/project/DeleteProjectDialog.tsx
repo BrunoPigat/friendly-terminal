@@ -3,10 +3,11 @@ import { useProjectStore } from '@/stores/project-store'
 
 interface DeleteProjectDialogProps {
   projectName: string
+  imported: boolean
   onClose: () => void
 }
 
-export default function DeleteProjectDialog({ projectName, onClose }: DeleteProjectDialogProps) {
+export default function DeleteProjectDialog({ projectName, imported, onClose }: DeleteProjectDialogProps) {
   const deleteProject = useProjectStore((s) => s.deleteProject)
 
   const [confirmation, setConfirmation] = useState('')
@@ -81,39 +82,66 @@ export default function DeleteProjectDialog({ projectName, onClose }: DeleteProj
           </div>
           <div>
             <h2 className="text-base font-semibold text-win-text">
-              Delete Project
+              {imported ? 'Remove Imported Project' : 'Delete Project'}
             </h2>
             <p className="mt-1 text-sm text-win-text-secondary">
-              This will permanently delete your project and all its files.
+              {imported
+                ? 'This will remove the project from Your Friendly Terminal. Your original folder will not be deleted.'
+                : 'This will permanently delete your project and all its files.'}
             </p>
           </div>
         </div>
 
         {/* Warning message */}
-        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3">
-          <p className="text-xs leading-relaxed text-win-text-secondary">
-            Deleting <strong className="text-win-text">{projectName}</strong> will
-            permanently remove <strong className="text-red-600">everything</strong> inside
-            it, including:
-          </p>
-          <ul className="mt-2 space-y-1 text-xs text-win-text-secondary">
-            <li className="flex items-center gap-2">
-              <span className="text-red-400">&#x2022;</span>
-              All agents and their configurations
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-red-400">&#x2022;</span>
-              Memory files and conversation history
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-red-400">&#x2022;</span>
-              MCP server configurations
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-red-400">&#x2022;</span>
-              Skills, tips, and all project files
-            </li>
-          </ul>
+        <div className={`mb-5 rounded-lg px-3.5 py-3 ${imported ? 'border border-amber-200 bg-amber-50' : 'border border-red-200 bg-red-50'}`}>
+          {imported ? (
+            <>
+              <p className="text-xs leading-relaxed text-win-text-secondary">
+                <strong className="text-win-text">{projectName}</strong> is an imported project.
+                Only the link inside Your Friendly Terminal will be removed.
+              </p>
+              <ul className="mt-2 space-y-1 text-xs text-win-text-secondary">
+                <li className="flex items-center gap-2">
+                  <span className="text-amber-400">&#x2022;</span>
+                  Your original folder on disk stays untouched
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-amber-400">&#x2022;</span>
+                  All files, agents, and configs inside it are preserved
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-amber-400">&#x2022;</span>
+                  You can re-import the folder at any time
+                </li>
+              </ul>
+            </>
+          ) : (
+            <>
+              <p className="text-xs leading-relaxed text-win-text-secondary">
+                Deleting <strong className="text-win-text">{projectName}</strong> will
+                permanently remove <strong className="text-red-600">everything</strong> inside
+                it, including:
+              </p>
+              <ul className="mt-2 space-y-1 text-xs text-win-text-secondary">
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">&#x2022;</span>
+                  All agents and their configurations
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">&#x2022;</span>
+                  Memory files and conversation history
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">&#x2022;</span>
+                  MCP server configurations
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">&#x2022;</span>
+                  Skills, tips, and all project files
+                </li>
+              </ul>
+            </>
+          )}
         </div>
 
         {/* Confirmation form */}
@@ -149,7 +177,7 @@ export default function DeleteProjectDialog({ projectName, onClose }: DeleteProj
               disabled={!isMatch || deleting}
               className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {deleting ? 'Deleting...' : 'Delete Project'}
+              {deleting ? (imported ? 'Removing...' : 'Deleting...') : (imported ? 'Remove Project' : 'Delete Project')}
             </button>
           </div>
         </form>

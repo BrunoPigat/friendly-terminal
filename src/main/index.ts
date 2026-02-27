@@ -40,11 +40,20 @@ function setupWindow(win: BrowserWindow, { maximize = true } = {}): void {
   // Intercept Ctrl+V before Chromium handles it — send clipboard text to renderer
   win.webContents.on('before-input-event', (event, input) => {
     if (win.isDestroyed()) return
-    if (input.control && input.key.toLowerCase() === 'v' && input.type === 'keyDown') {
-      const text = clipboard.readText()
-      if (text) {
-        win.webContents.send('clipboard:paste', text)
+    if (input.type === 'keyDown') {
+      // DevTools: F12 or Ctrl+Shift+I
+      if (input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+        win.webContents.toggleDevTools()
         event.preventDefault()
+        return
+      }
+      // Paste: Ctrl+V
+      if (input.control && input.key.toLowerCase() === 'v') {
+        const text = clipboard.readText()
+        if (text) {
+          win.webContents.send('clipboard:paste', text)
+          event.preventDefault()
+        }
       }
     }
   })

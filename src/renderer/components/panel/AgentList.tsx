@@ -89,7 +89,7 @@ export default function AgentList() {
         </div>
         <p className="text-sm text-win-text-secondary">No agents yet</p>
         <p className="text-xs text-win-text-tertiary">
-          Agents will appear here when you add them to your project.
+          Ask your AI assistant on the chat to create a new agent — just describe what you need it to do.
         </p>
       </div>
     )
@@ -97,6 +97,9 @@ export default function AgentList() {
 
   return (
     <div className="flex flex-col gap-2 p-4">
+      <p className="text-[11px] leading-relaxed text-win-text-tertiary px-1 pb-1">
+        Ask your AI assistant on the chat to create a new agent for you — just describe what you need it to do.
+      </p>
       {agents.map((agent) => {
         const isExpanded = expandedPaths.has(agent.filePath)
         return (

@@ -86,7 +86,7 @@ export default function SkillList() {
         </div>
         <p className="text-sm text-win-text-secondary">No skills yet</p>
         <p className="text-xs text-win-text-tertiary">
-          Skills will appear here when you add them to your project.
+          Ask your AI assistant on the chat to create a new skill — just describe what you want it to do.
         </p>
       </div>
     )
@@ -94,6 +94,9 @@ export default function SkillList() {
 
   return (
     <div className="flex flex-col gap-2 p-4">
+      <p className="text-[11px] leading-relaxed text-win-text-tertiary px-1 pb-1">
+        Ask your AI assistant on the chat to create a new skill for you — just describe what you want it to do.
+      </p>
       {skills.map((skill) => {
         const isExpanded = expandedPaths.has(skill.filePath)
         return (

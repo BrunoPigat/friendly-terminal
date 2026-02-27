@@ -21,7 +21,7 @@ export default function WelcomeScreen() {
   const [creating, setCreating] = useState(false)
   const [importing, setImporting] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<typeof projects[number] | null>(null)
   const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
@@ -144,7 +144,7 @@ export default function WelcomeScreen() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      setDeleteTarget(project.name)
+                      setDeleteTarget(project)
                     }}
                     className="shrink-0 mr-3 flex h-9 w-9 items-center justify-center rounded-lg text-win-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
                     title={`Delete ${project.name}`}
@@ -230,7 +230,8 @@ export default function WelcomeScreen() {
       {/* Delete confirmation dialog */}
       {deleteTarget && (
         <DeleteProjectDialog
-          projectName={deleteTarget}
+          projectName={deleteTarget.name}
+          imported={deleteTarget.imported}
           onClose={() => setDeleteTarget(null)}
         />
       )}

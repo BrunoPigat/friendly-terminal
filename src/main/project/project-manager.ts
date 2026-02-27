@@ -1,4 +1,4 @@
-import { readdir, stat, mkdir, rm, writeFile, readFile, symlink } from 'fs/promises'
+import { readdir, stat, lstat, mkdir, rm, writeFile, readFile, symlink } from 'fs/promises'
 import { join, basename } from 'path'
 import { existsSync } from 'fs'
 import { app } from 'electron'
@@ -13,6 +13,7 @@ export interface Project {
   name: string
   path: string
   createdAt: string
+  imported: boolean
 }
 
 /**
@@ -34,12 +35,15 @@ export async function listProjects(): Promise<Project[]> {
   for (const entry of entries) {
     const fullPath = join(projectsDir, entry)
     try {
+      const linkInfo = await lstat(fullPath)
+      const isImported = linkInfo.isSymbolicLink()
       const info = await stat(fullPath)
       if (info.isDirectory()) {
         projects.push({
           name: entry,
           path: fullPath,
-          createdAt: info.birthtime.toISOString()
+          createdAt: info.birthtime.toISOString(),
+          imported: isImported
         })
       }
     } catch {
