@@ -28,7 +28,7 @@ const config: Configuration = {
         arch: ['x64']
       }
     ],
-    icon: 'resources/icon.ico'
+    icon: 'resources/logo.png'
   },
   nsis: {
     oneClick: false,

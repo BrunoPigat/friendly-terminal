@@ -139,7 +139,7 @@ function createBrowserWindow(): BrowserWindow {
     minHeight: 500,
     show: false,
     frame: false,
-    icon: join(__dirname, '../../resources/icon.png'),
+    icon: join(__dirname, '../../resources/logo.png'),
     title: 'Your Friendly Terminal',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
