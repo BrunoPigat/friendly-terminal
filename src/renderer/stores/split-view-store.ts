@@ -134,19 +134,9 @@ export const useSplitViewStore = create<SplitViewState>((set, get) => ({
     }
 
     set((s) => {
-      let panels = [...s.panels, newPanel]
+      const panels = [...s.panels, newPanel]
       const newMap = new Map(s._terminalToPanelMap)
       newMap.set(termId, panelId)
-
-      // Enforce maxPanels: remove oldest compact panels (leftmost)
-      while (panels.length > s.maxPanels) {
-        const removed = panels.shift()!
-        // Kill PTYs for removed panel
-        for (const tid of removed.terminals.keys()) {
-          api.ptyKill(tid)
-          newMap.delete(tid)
-        }
-      }
 
       return { panels, _terminalToPanelMap: newMap }
     })
@@ -189,20 +179,7 @@ export const useSplitViewStore = create<SplitViewState>((set, get) => ({
     const newMax = calcMaxPanels(windowWidth)
     set((s) => {
       if (newMax === s.maxPanels) return s
-
-      let panels = [...s.panels]
-      const newMap = new Map(s._terminalToPanelMap)
-
-      // Auto-close excess panels from the left
-      while (panels.length > newMax) {
-        const removed = panels.shift()!
-        for (const tid of removed.terminals.keys()) {
-          api.ptyKill(tid)
-          newMap.delete(tid)
-        }
-      }
-
-      return { maxPanels: newMax, panels, _terminalToPanelMap: newMap }
+      return { maxPanels: newMax }
     })
   },
 

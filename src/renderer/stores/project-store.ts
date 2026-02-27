@@ -13,6 +13,7 @@ interface ProjectState {
   selectProject: (project: Project, defaultEngine?: EngineId) => void
   clearProject: () => void
   createProject: (name: string, defaultEngine?: EngineId) => Promise<Project>
+  importProject: (folderPath: string) => Promise<Project>
   deleteProject: (name: string) => Promise<void>
 }
 
@@ -53,6 +54,14 @@ export const useProjectStore = create<ProjectState>((set) => ({
       projects: [...state.projects, project]
     }))
     // Don't auto-select here — the caller will call selectProject
+    return project
+  },
+
+  importProject: async (folderPath) => {
+    const project = await api.importProject(folderPath)
+    set((state) => ({
+      projects: [...state.projects, project]
+    }))
     return project
   },
 

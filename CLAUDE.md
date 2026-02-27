@@ -191,6 +191,17 @@ This project uses `node-pty` which requires native compilation. When working wit
 2. Ensure the correct Node.js version is used (match Electron's Node version)
 3. On Windows, may require Visual Studio Build Tools
 
+### ConPTY Window Close Crash (Windows)
+On Windows, ConPTY crashes the entire Electron process (`0xC000041D` / `STATUS_FATAL_APP_EXIT`) if a PTY process is alive during native `BrowserWindow` destruction. This affects multi-window scenarios (pop-out projects).
+
+**Solution** (in `setupWindow`, `src/main/index.ts`):
+- Secondary window close is intercepted with `e.preventDefault()`
+- PTYs owned by the window are **killed first** while the window is still alive
+- After a 300ms delay (for ConPTY native cleanup), `win.destroy()` is called
+- The last window closing only **detaches** PTY callbacks (actual kill happens in `window-all-closed` / `before-quit`)
+
+**Key rule**: Never let a window with live ConPTY processes be destroyed directly. Always kill PTYs before destroying the window, or detach and defer kill.
+
 ## Auto-Updates
 
 - Uses `electron-updater` with GitHub releases as the provider

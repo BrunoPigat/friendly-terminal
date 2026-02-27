@@ -1,8 +1,8 @@
 import { app, BrowserWindow, screen, shell, ipcMain, Menu, clipboard } from 'electron'
 import { join } from 'path'
 import Store from 'electron-store'
-import { registerPtyIpc, killAllPty, detachPtysForWindow } from './pty/pty-ipc'
-import { registerFsIpc, closeAllWatchers } from './filesystem/fs-ipc'
+import { registerPtyIpc, killAllPty, killPtysForWindow, collectPtyIdsForWindow, killPtyById } from './pty/pty-ipc'
+import { registerFsIpc, closeAllWatchers, closeWatchersForWindow } from './filesystem/fs-ipc'
 import { registerProjectIpc } from './project/project-ipc'
 import { detectEngines, getAvailableEngines } from './ai-engines/engine-registry'
 import { getCommand, isInSessionCommand } from './ai-engines/command-dictionary'
@@ -35,7 +35,7 @@ let mainWindow: BrowserWindow | null = null
 /** Store pre-focus-mode bounds so we can restore when exiting focus mode */
 const preFocusBounds = new Map<BrowserWindow, Electron.Rectangle>()
 
-function setupWindow(win: BrowserWindow): void {
+function setupWindow(win: BrowserWindow, { maximize = true } = {}): void {
   // Intercept Ctrl+V before Chromium handles it — send clipboard text to renderer
   win.webContents.on('before-input-event', (event, input) => {
     if (win.isDestroyed()) return
@@ -48,10 +48,18 @@ function setupWindow(win: BrowserWindow): void {
     }
   })
 
-  // Show window maximized once ready to avoid visual flash
   win.on('ready-to-show', () => {
-    win.maximize()
+    if (maximize) win.maximize()
     win.show()
+  })
+
+  // Debug: catch renderer crashes
+  win.webContents.on('render-process-gone', (_event, details) => {
+    console.error(`[window] render-process-gone: reason=${details.reason}, exitCode=${details.exitCode}`)
+  })
+
+  win.webContents.on('crashed', () => {
+    console.error('[window] webContents crashed')
   })
 
   // Open external links in the system browser
@@ -62,9 +70,54 @@ function setupWindow(win: BrowserWindow): void {
     return { action: 'deny' }
   })
 
-  win.on('close', () => {
-    console.log('[window] main close — detaching PTYs')
-    detachPtysForWindow(win)
+  // On Windows, ConPTY crashes (0xC000041D) if a PTY is alive during native
+  // window destruction. For secondary windows, we intercept the close, kill
+  // PTYs first, wait for ConPTY cleanup to finish, THEN destroy the window.
+  let closingHandled = false
+
+  win.on('close', (e) => {
+    const remaining = BrowserWindow.getAllWindows().length
+    const isSecondary = remaining > 1
+    console.log(`[window] close — remaining: ${remaining}, secondary: ${isSecondary}, handled: ${closingHandled}`)
+
+    // Clean up FS watchers owned by this window (always safe)
+    closeWatchersForWindow(win)
+
+    if (!isSecondary || closingHandled) {
+      // Last window or already handled — just detach PTYs and let the close proceed.
+      // Actual kill happens in window-all-closed / before-quit.
+      console.log('[window] detaching PTYs and proceeding with close')
+      killPtysForWindow(win, { detachOnly: true })
+      return
+    }
+
+    // Secondary window: block close, kill PTYs first, then destroy after delay.
+    e.preventDefault()
+    closingHandled = true
+
+    const ptyIds = collectPtyIdsForWindow(win)
+    console.log(`[window] secondary — killing ${ptyIds.length} PTYs before destroying window`)
+
+    // Kill PTYs while the window is still alive (avoids ConPTY crash)
+    for (const id of ptyIds) {
+      killPtyById(id)
+    }
+    // Remove from owner map so no more IPC goes to this window
+    killPtysForWindow(win, { detachOnly: true })
+
+    // Give ConPTY time to fully clean up, then destroy the window
+    setTimeout(() => {
+      console.log('[window] deferred destroy after PTY cleanup')
+      if (!win.isDestroyed()) {
+        win.destroy()
+      }
+    }, 300)
+  })
+
+  win.on('closed', () => {
+    console.log('[window] closed event fired')
+    if (win === mainWindow) mainWindow = null
+    preFocusBounds.delete(win)
   })
 }
 
@@ -144,6 +197,35 @@ function registerGlobalIpc(): void {
 
   ipcMain.handle('settings:set', async (_event, key: string, value: unknown) => {
     settingsStore.set(key, value)
+  })
+
+  // Pop out a project into its own window
+  ipcMain.handle('window:pop-out-project', async (event, projectName: string, engineId: string) => {
+    const senderWin = BrowserWindow.fromWebContents(event.sender)
+    const newWin = createBrowserWindow()
+
+    // Position the new window offset from the sender so both are visible
+    if (senderWin && !senderWin.isDestroyed()) {
+      const bounds = senderWin.getBounds()
+      newWin.setBounds({
+        x: bounds.x + 60,
+        y: bounds.y + 60,
+        width: bounds.width,
+        height: bounds.height
+      })
+    }
+
+    setupWindow(newWin, { maximize: false })
+
+    const isDev = !app.isPackaged
+    const query = `?popout=${encodeURIComponent(projectName)}&engine=${encodeURIComponent(engineId)}`
+    if (isDev && process.env['ELECTRON_RENDERER_URL']) {
+      newWin.loadURL(process.env['ELECTRON_RENDERER_URL'] + query)
+    } else {
+      newWin.loadFile(join(__dirname, '../renderer/index.html'), {
+        search: query
+      })
+    }
   })
 
   // Window controls — use event.sender to target the correct window
@@ -237,9 +319,6 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
-  // Double-check there are truly no windows left (safety guard for multi-window)
-  if (BrowserWindow.getAllWindows().length > 0) return
-
   // Kill all PTY processes, close watchers, and stop GUI server before quitting
   killAllPty()
   closeAllWatchers()

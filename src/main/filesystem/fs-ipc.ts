@@ -132,4 +132,22 @@ export function closeAllWatchers(): void {
     watcher.close()
     watchers.delete(path)
   }
+  watchOwners.clear()
+}
+
+/**
+ * Close watchers owned by a specific window. Call when a window closes.
+ */
+export function closeWatchersForWindow(win: BrowserWindow): void {
+  for (const [dirPath, owner] of watchOwners) {
+    if (owner === win) {
+      const watcher = watchers.get(dirPath)
+      if (watcher) {
+        watcher.close()
+        watchers.delete(dirPath)
+      }
+      watchOwners.delete(dirPath)
+      console.log(`[fs-ipc] closed watcher for "${dirPath}" (window closing)`)
+    }
+  }
 }

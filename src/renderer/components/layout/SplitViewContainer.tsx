@@ -4,6 +4,7 @@ import { useSettingsStore } from '@/stores/settings-store'
 import { useTerminalStore } from '@/stores/terminal-store'
 import { useProjectStore } from '@/stores/project-store'
 import { SIDEBAR_MIN_WIDTH, SIDEBAR_MAX_WIDTH, ENGINE_NAMES } from '@/lib/constants'
+import * as api from '@/lib/api'
 import Sidebar from '@/components/layout/Sidebar'
 import FileBrowser from '@/components/sidebar/FileBrowser'
 import TerminalToolbar from '@/components/terminal/TerminalToolbar'
@@ -24,6 +25,7 @@ const DIVIDER_WIDTH = 6 // matches w-1.5
 export default function SplitViewContainer() {
   const panels = useSplitViewStore((s) => s.panels)
   const recalcMaxPanels = useSplitViewStore((s) => s.recalcMaxPanels)
+  const closePanel = useSplitViewStore((s) => s.closePanel)
 
   const setSidebarWidth = useSettingsStore((s) => s.setSidebarWidth)
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
@@ -55,6 +57,14 @@ export default function SplitViewContainer() {
   // Active panel and its assigned color
   const activePanel = panels.length > 0 ? panels[panels.length - 1] : undefined
   const ac = activePanel?.color
+
+  const handlePopOutActive = useCallback(() => {
+    if (!activePanel || !activeProject) return
+    const engine = activeTerminal?.engine || 'claude'
+    api.windowPopOutProject(activeProject.name, engine).then(() => {
+      closePanel(activePanel.panelId)
+    })
+  }, [activePanel, activeProject, activeTerminal?.engine, closePanel])
 
   // Listen for window resize
   useEffect(() => {
@@ -144,20 +154,34 @@ export default function SplitViewContainer() {
           <>
             <div className={`h-0.5 shrink-0 ${ac.accent}`} />
 
-            <div className={`flex h-9 shrink-0 items-center gap-2 border-b px-3 ${ac.bg} ${ac.border}`}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                className={`shrink-0 ${ac.icon}`}
-              >
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              </svg>
-              <span className="text-sm font-semibold text-win-text truncate">
-                {activeProject?.name}
-              </span>
-              {activeTerminal && (
-                <span className={`text-[10px] font-medium shrink-0 px-1.5 py-0.5 rounded-full ${ac.badge}`}>
-                  {ENGINE_NAMES[activeTerminal.engine]}
+            <div className={`flex h-9 shrink-0 items-center justify-between border-b px-3 ${ac.bg} ${ac.border}`}>
+              <div className="flex items-center gap-2 min-w-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                  className={`shrink-0 ${ac.icon}`}
+                >
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+                <span className="text-sm font-semibold text-win-text truncate">
+                  {activeProject?.name}
                 </span>
-              )}
+                {activeTerminal && (
+                  <span className={`text-[10px] font-medium shrink-0 px-1.5 py-0.5 rounded-full ${ac.badge}`}>
+                    {ENGINE_NAMES[activeTerminal.engine]}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handlePopOutActive}
+                className="flex h-5 w-5 items-center justify-center rounded text-win-text-tertiary hover:bg-black/10 hover:text-win-text transition-colors shrink-0"
+                aria-label={`Pop out ${activeProject?.name}`}
+                title="Open in new window"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </button>
             </div>
           </>
         )}

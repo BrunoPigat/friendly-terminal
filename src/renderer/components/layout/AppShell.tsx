@@ -5,6 +5,7 @@ import WelcomeScreen from '@/components/WelcomeScreen'
 import SplitViewContainer from '@/components/layout/SplitViewContainer'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
+import type { EngineId } from '@/lib/constants'
 import { useSplitViewStore } from '@/stores/split-view-store'
 
 export default function AppShell() {
@@ -22,16 +23,19 @@ export default function AppShell() {
     loadSettings()
   }, [loadSettings])
 
-  // Auto-select project from URL query param (?project=name) — for legacy support
+  // Auto-select project from URL query params
+  // ?project=name (legacy) or ?popout=name&engine=id (pop-out window)
   useEffect(() => {
     if (panels.length > 0) return
     const params = new URLSearchParams(window.location.search)
-    const projectName = params.get('project')
+    const popoutName = params.get('popout')
+    const projectName = popoutName || params.get('project')
+    const engine = (params.get('engine') as EngineId) || defaultEngine
     if (!projectName) return
     loadProjects().then(() => {
       const projects = useProjectStore.getState().projects
       const match = projects.find((p) => p.name === projectName)
-      if (match) selectProject(match, defaultEngine)
+      if (match) selectProject(match, engine)
     })
     // Only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps

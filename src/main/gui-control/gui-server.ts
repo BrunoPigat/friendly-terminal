@@ -62,7 +62,13 @@ export async function startGuiServer(mainWindow: BrowserWindow): Promise<void> {
       ws.on('message', (rawData) => {
         try {
           const data = JSON.parse(rawData.toString()) as GuiAction
-          const result = handleAction(data, mainWindow)
+          // Use the focused window (or mainWindow fallback) so actions route correctly
+          const targetWin = BrowserWindow.getFocusedWindow() || mainWindow
+          if (targetWin.isDestroyed()) {
+            ws.send(JSON.stringify({ success: false, error: 'No active window' }))
+            return
+          }
+          const result = handleAction(data, targetWin)
           ws.send(JSON.stringify(result))
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : String(err)

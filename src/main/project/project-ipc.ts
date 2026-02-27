@@ -1,7 +1,8 @@
-import { ipcMain } from 'electron'
+import { ipcMain, dialog, BrowserWindow } from 'electron'
 import {
   listProjects,
   createProject,
+  importProject,
   deleteProject,
   getProjectPath
 } from './project-manager'
@@ -31,6 +32,20 @@ export function registerProjectIpc(): void {
   ipcMain.handle('project:delete', async (_event, name: string) => {
     console.log(`[project:delete] name="${name}"`)
     return deleteProject(name)
+  })
+
+  ipcMain.handle('project:import', async (_event, folderPath: string) => {
+    console.log(`[project:import] path="${folderPath}"`)
+    return importProject(folderPath)
+  })
+
+  ipcMain.handle('dialog:open-directory', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const result = await dialog.showOpenDialog(win!, {
+      properties: ['openDirectory']
+    })
+    if (result.canceled || result.filePaths.length === 0) return null
+    return result.filePaths[0]
   })
 
   ipcMain.handle('project:get-path', async (_event, name: string) => {

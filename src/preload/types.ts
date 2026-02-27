@@ -81,8 +81,12 @@ export interface IElectronAPI {
   // Projects
   listProjects: () => Promise<Project[]>
   createProject: (name: string) => Promise<Project>
+  importProject: (folderPath: string) => Promise<Project>
   deleteProject: (name: string) => Promise<void>
   getProjectsDir: () => Promise<string>
+
+  // Dialogs
+  showOpenDirectory: () => Promise<string | null>
 
   // MCP
   listMcpServers: (projectName: string) => Promise<McpConfig>
@@ -113,4 +117,5 @@ export interface IElectronAPI {
   windowMaximize: () => void
   windowClose: () => void
   windowSetFocusMode: (enabled: boolean) => void
+  windowPopOutProject: (projectName: string, engineId: string) => Promise<void>
 }

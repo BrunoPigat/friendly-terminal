@@ -35,8 +35,12 @@ const api: IElectronAPI = {
   // Projects
   listProjects: () => ipcRenderer.invoke('project:list'),
   createProject: (name) => ipcRenderer.invoke('project:create', name),
+  importProject: (folderPath) => ipcRenderer.invoke('project:import', folderPath),
   deleteProject: (name) => ipcRenderer.invoke('project:delete', name),
   getProjectsDir: () => ipcRenderer.invoke('project:get-projects-dir'),
+
+  // Dialogs
+  showOpenDirectory: () => ipcRenderer.invoke('dialog:open-directory'),
 
   // MCP
   listMcpServers: (projectName) => ipcRenderer.invoke('mcp:list', projectName),
@@ -75,6 +79,7 @@ const api: IElectronAPI = {
   windowMaximize: () => ipcRenderer.send('window:maximize'),
   windowClose: () => ipcRenderer.send('window:close'),
   windowSetFocusMode: (enabled) => ipcRenderer.send('window:set-focus-mode', enabled),
+  windowPopOutProject: (projectName, engineId) => ipcRenderer.invoke('window:pop-out-project', projectName, engineId),
 }
 
 contextBridge.exposeInMainWorld('api', api)

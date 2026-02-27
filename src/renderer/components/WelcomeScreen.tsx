@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import { APP_NAME } from '@/lib/constants'
+import { showOpenDirectory } from '@/lib/api'
 import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
 import SetupBanner from '@/components/SetupBanner'
 import HelpDialog from '@/components/HelpDialog'
@@ -13,10 +14,12 @@ export default function WelcomeScreen() {
   const loadProjects = useProjectStore((s) => s.loadProjects)
   const selectProject = useProjectStore((s) => s.selectProject)
   const createProject = useProjectStore((s) => s.createProject)
+  const importProject = useProjectStore((s) => s.importProject)
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
 
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [showHelp, setShowHelp] = useState(false)
@@ -38,6 +41,19 @@ export default function WelcomeScreen() {
     setCreating(false)
     setNewName('')
     setShowCreate(false)
+  }
+
+  const handleImport = async () => {
+    const folderPath = await showOpenDirectory()
+    if (!folderPath) return
+    setImporting(true)
+    try {
+      const project = await importProject(folderPath)
+      selectProject(project, defaultEngine)
+    } catch (err) {
+      console.error('[WelcomeScreen] Failed to import project:', err)
+    }
+    setImporting(false)
   }
 
   const handleSelectProject = useCallback(
@@ -157,7 +173,7 @@ export default function WelcomeScreen() {
           )}
         </div>
 
-        {/* Create new project */}
+        {/* Create / Import project */}
         {showCreate ? (
           <div className="flex gap-3">
             <input
@@ -184,16 +200,30 @@ export default function WelcomeScreen() {
             </button>
           </div>
         ) : (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex w-full items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-win-border-strong px-5 py-5 text-base font-medium text-win-text-secondary hover:border-win-accent hover:text-win-accent hover:bg-win-accent-subtle transition-all"
-          >
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <line x1="8" y1="3" x2="8" y2="13" />
-              <line x1="3" y1="8" x2="13" y2="8" />
-            </svg>
-            New Project
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex flex-1 items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-win-border-strong px-5 py-5 text-base font-medium text-win-text-secondary hover:border-win-accent hover:text-win-accent hover:bg-win-accent-subtle transition-all"
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="8" y1="3" x2="8" y2="13" />
+                <line x1="3" y1="8" x2="13" y2="8" />
+              </svg>
+              New Project
+            </button>
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              className="flex flex-1 items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-win-border-strong px-5 py-5 text-base font-medium text-win-text-secondary hover:border-win-accent hover:text-win-accent hover:bg-win-accent-subtle transition-all disabled:opacity-40"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                <polyline points="12 13 12 17" />
+                <polyline points="9 10 12 7 15 10" />
+              </svg>
+              {importing ? 'Importing...' : 'Import Folder'}
+            </button>
+          </div>
         )}
       </div>
 

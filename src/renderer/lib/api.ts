@@ -67,8 +67,11 @@ interface IElectronAPI {
 
   listProjects: () => Promise<Project[]>
   createProject: (name: string) => Promise<Project>
+  importProject: (folderPath: string) => Promise<Project>
   deleteProject: (name: string) => Promise<void>
   getProjectsDir: () => Promise<string>
+
+  showOpenDirectory: () => Promise<string | null>
 
   listMcpServers: (projectName: string) => Promise<unknown>
   addMcpServer: (projectName: string, name: string, server: McpServer) => Promise<void>
@@ -90,6 +93,7 @@ interface IElectronAPI {
   windowMaximize: () => void
   windowClose: () => void
   windowSetFocusMode: (enabled: boolean) => void
+  windowPopOutProject: (projectName: string, engineId: string) => Promise<void>
 }
 
 function getApi(): IElectronAPI {
@@ -117,8 +121,12 @@ export const onFsChanged = (cb: (rootPath: string, changedDir: string) => void) 
 // Projects
 export const listProjects = () => getApi().listProjects()
 export const createProject = (name: string) => getApi().createProject(name)
+export const importProject = (folderPath: string) => getApi().importProject(folderPath)
 export const deleteProject = (name: string) => getApi().deleteProject(name)
 export const getProjectsDir = () => getApi().getProjectsDir()
+
+// Dialogs
+export const showOpenDirectory = () => getApi().showOpenDirectory()
 
 // MCP
 export const listMcpServers = (projectName: string) => getApi().listMcpServers(projectName)
@@ -152,3 +160,4 @@ export const windowMinimize = () => getApi().windowMinimize()
 export const windowMaximize = () => getApi().windowMaximize()
 export const windowClose = () => getApi().windowClose()
 export const windowSetFocusMode = (enabled: boolean) => getApi().windowSetFocusMode(enabled)
+export const windowPopOutProject = (projectName: string, engineId: string) => getApi().windowPopOutProject(projectName, engineId)

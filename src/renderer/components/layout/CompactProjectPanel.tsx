@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useSplitViewStore, COMPACT_PANEL_WIDTH, type ProjectPanel } from '@/stores/split-view-store'
 import TerminalInstance from '@/components/terminal/TerminalInstance'
 import { ENGINE_NAMES } from '@/lib/constants'
+import * as api from '@/lib/api'
 
 interface CompactProjectPanelProps {
   panel: ProjectPanel
@@ -31,6 +32,17 @@ export default function CompactProjectPanel({ panel }: CompactProjectPanelProps)
       closePanel(panel.panelId)
     },
     [closePanel, panel.panelId]
+  )
+
+  const handlePopOut = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      const engine = activeTerminal?.engine || 'claude'
+      api.windowPopOutProject(panel.project.name, engine).then(() => {
+        closePanel(panel.panelId)
+      })
+    },
+    [panel.project.name, panel.panelId, activeTerminal?.engine, closePanel]
   )
 
   return (
@@ -66,6 +78,18 @@ export default function CompactProjectPanel({ panel }: CompactProjectPanelProps)
           <span className={`text-[10px] ${c.hint}`}>
             Click to expand
           </span>
+          <button
+            onClick={handlePopOut}
+            className="flex h-5 w-5 items-center justify-center rounded text-win-text-tertiary hover:bg-black/10 hover:text-win-text transition-colors"
+            aria-label={`Pop out ${panel.project.name}`}
+            title="Open in new window"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </button>
           <button
             onClick={handleClose}
             className="flex h-5 w-5 items-center justify-center rounded text-win-text-tertiary hover:bg-black/10 hover:text-win-text transition-colors"

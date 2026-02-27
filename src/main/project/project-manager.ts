@@ -1,5 +1,6 @@
-import { readdir, stat, mkdir, rm, writeFile, readFile } from 'fs/promises'
-import { join } from 'path'
+import { readdir, stat, mkdir, rm, writeFile, readFile, symlink } from 'fs/promises'
+import { join, basename } from 'path'
+import { existsSync } from 'fs'
 import { app } from 'electron'
 import { getProjectsDir, ensureDir } from '../util/paths'
 import { copyDefaultSkills } from './skills-manager'
@@ -87,6 +88,66 @@ export async function createProject(name: string): Promise<Project> {
     path: projectDir,
     createdAt: info.birthtime.toISOString()
   }
+}
+
+/**
+ * Imports an existing folder as a project.
+ * Creates a directory junction in the projects dir pointing to the external folder,
+ * then fills in any missing default structure (tips.md, skills, agents, MCP, permissions, instruction files).
+ */
+export async function importProject(folderPath: string): Promise<Project> {
+  const projectsDir = getProjectsDir()
+  await ensureDir(projectsDir)
+
+  const name = basename(folderPath)
+  const linkPath = join(projectsDir, name)
+
+  // Check if a project with this name already exists
+  if (existsSync(linkPath)) {
+    throw new Error(`A project named "${name}" already exists`)
+  }
+
+  // Create a directory junction (works without admin on Windows, like a symlink for dirs)
+  await symlink(folderPath, linkPath, 'junction')
+
+  // Now fill in any missing default structure
+  await ensureDefaultStructure(folderPath)
+
+  const info = await stat(folderPath)
+  console.log(`[project-manager] imported project "${name}" from ${folderPath}`)
+
+  return {
+    name,
+    path: linkPath,
+    createdAt: info.birthtime.toISOString()
+  }
+}
+
+/**
+ * Ensures a project directory has all the default structure.
+ * Checks for each piece and only creates what's missing.
+ */
+async function ensureDefaultStructure(projectDir: string): Promise<void> {
+  // 1. tips.md
+  const tipsPath = join(projectDir, 'tips.md')
+  if (!existsSync(tipsPath)) {
+    await writeFile(tipsPath, '', 'utf-8')
+  }
+
+  // 2. Default skills (only copies missing ones)
+  await copyDefaultSkills(projectDir)
+
+  // 3. Default agents (only copies missing ones)
+  await copyDefaultAgents(projectDir)
+
+  // 4. Instruction files (CLAUDE.md, GEMINI.md) — only if missing
+  await createDefaultInstructionFiles(projectDir, basename(projectDir))
+
+  // 5. GUI-control MCP server
+  await addDefaultGuiMcp(projectDir)
+
+  // 6. Default permissions
+  await createDefaultPermissions(projectDir)
 }
 
 /**

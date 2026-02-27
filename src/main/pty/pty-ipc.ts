@@ -91,22 +91,39 @@ export function killAllPty(): void {
 }
 
 /**
- * Detaches PTY processes owned by a specific window so their callbacks
- * no longer try to send to that window's webContents.
- * Does NOT kill the PTY processes — they'll be killed on app quit.
- * This avoids native ConPTY crashes on Windows during window close.
+ * Returns PTY IDs owned by a specific window (without modifying anything).
  */
-export function detachPtysForWindow(win: BrowserWindow): void {
-  const idsToDetach: string[] = []
+export function collectPtyIdsForWindow(win: BrowserWindow): string[] {
+  const ids: string[] = []
   for (const [id, owner] of ptyOwners) {
-    if (owner === win) {
-      idsToDetach.push(id)
+    if (owner === win) ids.push(id)
+  }
+  return ids
+}
+
+/**
+ * Detaches or kills PTY processes owned by a specific window.
+ * When detachOnly is true, callbacks are nulled but PTY processes stay alive.
+ */
+export function killPtysForWindow(win: BrowserWindow, { detachOnly = false } = {}): void {
+  const idsToProcess = collectPtyIdsForWindow(win)
+  if (idsToProcess.length === 0) return
+
+  console.log(`[pty-ipc] killPtysForWindow: ${detachOnly ? 'detaching' : 'killing'} ${idsToProcess.length} PTYs: ${idsToProcess.join(', ')}`)
+
+  for (const id of idsToProcess) {
+    ptyOwners.delete(id)
+    if (detachOnly) {
+      ptyManager.detach(id)
+    } else {
+      ptyManager.kill(id)
     }
   }
-  console.log(`[pty-ipc] detachPtysForWindow: detaching ${idsToDetach.length} PTYs: ${idsToDetach.join(', ')}`)
-  for (const id of idsToDetach) {
-    ptyOwners.delete(id)
-    // Null out the callbacks in PtyManager so native events are no-ops
-    ptyManager.detach(id)
-  }
+}
+
+/**
+ * Kill a single PTY by id. Used for deferred kills after window destruction.
+ */
+export function killPtyById(id: string): void {
+  ptyManager.kill(id)
 }
