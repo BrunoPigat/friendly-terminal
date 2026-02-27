@@ -17,7 +17,7 @@ export default function GitPanel() {
 
   const cwd = activeProject?.path ?? ''
 
-  // Initial load
+  // Initial load.
   useEffect(() => {
     checkGitAvailable()
   }, [checkGitAvailable])
