@@ -19,6 +19,14 @@ const config: Configuration = {
       from: 'resources/default-projects',
       to: 'default-projects',
       filter: ['**/*']
+    },
+    {
+      from: 'resources/icon.ico',
+      to: 'icon.ico'
+    },
+    {
+      from: 'resources/logo.png',
+      to: 'logo.png'
     }
   ],
   win: {
@@ -28,14 +36,20 @@ const config: Configuration = {
         arch: ['x64']
       }
     ],
-    icon: 'resources/logo.png'
+    icon: 'resources/icon.ico'
   },
   nsis: {
     oneClick: false,
     allowToChangeInstallationDirectory: true,
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
-    shortcutName: 'Your Friendly Terminal'
+    shortcutName: 'Your Friendly Terminal',
+    installerIcon: 'resources/icon.ico',
+    uninstallerIcon: 'resources/icon.ico',
+    installerHeader: 'resources/installer/header.bmp',
+    installerSidebar: 'resources/installer/sidebar.bmp',
+    uninstallerSidebar: 'resources/installer/sidebar.bmp',
+    include: 'resources/installer/installer.nsh'
   },
   publish: {
     provider: 'github',

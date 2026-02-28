@@ -141,7 +141,9 @@ function createBrowserWindow(): BrowserWindow {
     minHeight: 500,
     show: false,
     frame: false,
-    icon: join(__dirname, '../../resources/logo.png'),
+    icon: app.isPackaged
+      ? join(process.resourcesPath, 'icon.ico')
+      : join(__dirname, '../../resources/icon.ico'),
     title: 'Your Friendly Terminal',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
