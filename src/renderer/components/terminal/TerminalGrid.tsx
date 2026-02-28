@@ -1,6 +1,6 @@
 import { useTerminalStore } from '@/stores/terminal-store'
 import { useSettingsStore } from '@/stores/settings-store'
-import { ENGINE_NAMES } from '@/lib/constants'
+import { ENGINE_NAMES, ENGINE_COLORS } from '@/lib/constants'
 import * as api from '@/lib/api'
 import TerminalInstance from './TerminalInstance'
 
@@ -69,9 +69,7 @@ export default function TerminalGrid() {
                 <div className="flex items-center gap-1.5 min-w-0">
                   {/* Engine-colored dot */}
                   <div
-                    className={`h-2 w-2 shrink-0 rounded-full ${
-                      term.engine === 'claude' ? 'bg-orange-400' : 'bg-blue-400'
-                    }`}
+                    className={`h-2 w-2 shrink-0 rounded-full ${ENGINE_COLORS[term.engine]}`}
                   />
                   <span
                     className="text-xs truncate transition-colors duration-200"

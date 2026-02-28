@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
+import { ENGINE_DIRS } from '@/lib/constants'
 import * as api from '@/lib/api'
 import type { SkillEntry } from '@/lib/api'
 
@@ -48,7 +49,7 @@ export default function SkillList() {
     setLoading(true)
     loadSkills(activeProject.path)
 
-    const engineDir = defaultEngine === 'gemini' ? '.gemini' : '.claude'
+    const engineDir = ENGINE_DIRS[defaultEngine]
     const skillsDirSuffix = `/${engineDir}/skills`
 
     const unsub = api.onFsChanged((rootPath, changedDir) => {

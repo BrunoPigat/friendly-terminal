@@ -41,7 +41,8 @@ export async function copyDefaultAgents(projectDir: string): Promise<void> {
 
   const destinations = [
     getAgentsDir(projectDir, '.claude'),
-    getAgentsDir(projectDir, '.gemini')
+    getAgentsDir(projectDir, '.gemini'),
+    getAgentsDir(projectDir, '.agents')
   ]
 
   for (const dest of destinations) {

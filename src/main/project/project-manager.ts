@@ -214,6 +214,7 @@ async function addDefaultGuiMcp(projectDir: string): Promise<void> {
  *
  * Claude: .claude/settings.local.json — allows all gui-control MCP tools
  * Gemini: .gemini/settings.json — sets trust:true on gui-control server
+ * Codex: uses --full-auto flag; .agents/ dir is ensured by skills/agents copy
  */
 async function createDefaultPermissions(projectDir: string): Promise<void> {
   // Claude: allow all gui-control MCP tools via permissions.allow

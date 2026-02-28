@@ -8,7 +8,8 @@ import { existsSync } from 'fs'
  */
 const ENGINE_INSTRUCTION_FILES: Record<string, string> = {
   claude: 'CLAUDE.md',
-  gemini: 'GEMINI.md'
+  gemini: 'GEMINI.md',
+  codex: 'CODEX.md'
 }
 
 /**

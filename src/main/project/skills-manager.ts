@@ -42,7 +42,8 @@ export async function copyDefaultSkills(projectDir: string): Promise<void> {
 
   const destinations = [
     getSkillsDir(projectDir),
-    join(projectDir, '.gemini', 'skills')
+    join(projectDir, '.gemini', 'skills'),
+    join(projectDir, '.agents', 'skills')
   ]
 
   for (const dest of destinations) {

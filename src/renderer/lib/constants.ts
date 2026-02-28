@@ -7,10 +7,46 @@ export const APP_NAME = 'Your Friendly Terminal'
  */
 export const ENGINE_NAMES = {
   claude: 'Claude',
-  gemini: 'Gemini'
+  gemini: 'Gemini',
+  codex: 'Codex'
 } as const
 
 export type EngineId = keyof typeof ENGINE_NAMES
+
+/** Dot-color class for engine badges / indicators. */
+export const ENGINE_COLORS: Record<EngineId, string> = {
+  claude: 'bg-orange-400',
+  gemini: 'bg-blue-400',
+  codex: 'bg-green-400'
+}
+
+/** Text color class for engine-tinted icons. */
+export const ENGINE_TEXT_COLORS: Record<EngineId, string> = {
+  claude: 'text-orange-500',
+  gemini: 'text-blue-500',
+  codex: 'text-green-500'
+}
+
+/** Engine instruction / memory file names. */
+export const ENGINE_MD_FILES: Record<EngineId, string> = {
+  claude: 'CLAUDE.md',
+  gemini: 'GEMINI.md',
+  codex: 'CODEX.md'
+}
+
+/** Compact / compress slash-command per engine. */
+export const ENGINE_COMPACT_CMD: Record<EngineId, string> = {
+  claude: '/compact',
+  gemini: '/compress',
+  codex: '/compact'
+}
+
+/** Engine config directory name (relative to project root). */
+export const ENGINE_DIRS: Record<EngineId, string> = {
+  claude: '.claude',
+  gemini: '.gemini',
+  codex: '.agents'
+}
 
 /**
  * Default xterm.js terminal options.

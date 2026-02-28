@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { useTerminalStore, generateTerminalId } from '@/stores/terminal-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import { useProjectStore } from '@/stores/project-store'
-import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
+import { ENGINE_NAMES, ENGINE_TEXT_COLORS, type EngineId } from '@/lib/constants'
 import * as api from '@/lib/api'
 
 /**
@@ -71,7 +71,7 @@ export default function TerminalTabs() {
               )}
 
               {/* Chat bubble icon */}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 ${term.engine === 'claude' ? 'text-orange-500' : 'text-blue-500'}`}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 ${ENGINE_TEXT_COLORS[term.engine]}`}>
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
 

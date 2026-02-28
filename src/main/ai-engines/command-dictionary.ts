@@ -101,6 +101,40 @@ const COMMAND_MAP: Record<string, Record<CommandIntent, CommandTemplate>> = {
       template: '/help',
       isInSession: true
     }
+  },
+  codex: {
+    'start-session': {
+      template: 'codex',
+      isInSession: false
+    },
+    'continue-session': {
+      template: 'codex --resume',
+      isInSession: false
+    },
+    'add-dir': {
+      template: '/mention {dirPath}',
+      isInSession: true
+    },
+    'add-file': {
+      template: '@{filePath}',
+      isInSession: true
+    },
+    'add-mcp': {
+      template: '/mcp',
+      isInSession: true
+    },
+    'list-mcp': {
+      template: '/mcp',
+      isInSession: true
+    },
+    'remove-mcp': {
+      template: '/mcp',
+      isInSession: true
+    },
+    'show-help': {
+      template: '/help',
+      isInSession: true
+    }
   }
 }
 

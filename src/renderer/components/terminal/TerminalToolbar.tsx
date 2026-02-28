@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect, useRef } from 'react'
 import { useTerminalStore, generateTerminalId } from '@/stores/terminal-store'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
-import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
+import { ENGINE_NAMES, ENGINE_COLORS, ENGINE_MD_FILES, ENGINE_COMPACT_CMD, type EngineId } from '@/lib/constants'
 import type { AIEngineInfo } from '@/preload/types'
 import * as api from '@/lib/api'
 import ClearSessionDialog from './ClearSessionDialog'
@@ -12,7 +12,8 @@ import remarkGfm from 'remark-gfm'
 /** Install URLs for each engine */
 const ENGINE_INSTALL_URLS: Record<EngineId, string> = {
   claude: 'https://docs.anthropic.com/en/docs/claude-code/overview',
-  gemini: 'https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#-installation'
+  gemini: 'https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#-installation',
+  codex: 'https://github.com/openai/codex'
 }
 
 /**
@@ -31,7 +32,7 @@ function MemoryModal({
   const [content, setContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fileName = engine === 'claude' ? 'CLAUDE.md' : 'GEMINI.md'
+  const fileName = ENGINE_MD_FILES[engine]
 
   useEffect(() => {
     const filePath = `${projectPath}/${fileName}`
@@ -228,8 +229,9 @@ export default function TerminalToolbar() {
 
   const handleContinueSession = useCallback(() => {
     if (!activeTerminal) return
-    api.ptyWrite(activeTerminal.id, 'claude --continue\n')
-  }, [activeTerminal])
+    const continueCmd = currentEngine === 'codex' ? 'codex --resume' : 'claude --continue'
+    api.ptyWrite(activeTerminal.id, continueCmd + '\n')
+  }, [activeTerminal, currentEngine])
 
   // ---- Clear session handlers ----
 
@@ -247,7 +249,7 @@ export default function TerminalToolbar() {
   const handleSaveAndClear = useCallback(async () => {
     if (!activeTerminal || !activeProject) return
 
-    const engineMdFile = currentEngine === 'claude' ? 'CLAUDE.md' : 'GEMINI.md'
+    const engineMdFile = ENGINE_MD_FILES[currentEngine]
 
     const summarizePrompt =
       `Before clearing, summarize this session using the /summarizer skill format and append the summary to \`${engineMdFile}\` in the project root. ` +
@@ -266,8 +268,7 @@ export default function TerminalToolbar() {
 
   const handleCompact = useCallback(() => {
     if (!activeTerminal?.ptyId) return
-    const command = currentEngine === 'claude' ? '/compact' : '/compress'
-    api.ptyWrite(activeTerminal.id, command + '\n')
+    api.ptyWrite(activeTerminal.id, ENGINE_COMPACT_CMD[currentEngine] + '\n')
   }, [activeTerminal, currentEngine])
 
   const hasPty = !!activeTerminal?.ptyId
@@ -284,7 +285,7 @@ export default function TerminalToolbar() {
             onClick={() => setEngineDropdownOpen((v) => !v)}
             className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-3 py-2 text-sm text-win-text hover:bg-win-hover transition-colors cursor-pointer"
           >
-            <span className={`h-2 w-2 rounded-full ${selectedEngine === 'claude' ? 'bg-orange-400' : 'bg-blue-400'}`} />
+            <span className={`h-2 w-2 rounded-full ${ENGINE_COLORS[selectedEngine]}`} />
             {ENGINE_NAMES[selectedEngine]}
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-win-text-tertiary">
               <path d="M2 4l3 3 3-3" />
@@ -310,7 +311,7 @@ export default function TerminalToolbar() {
                           : 'text-win-text hover:bg-win-hover disabled:opacity-40 disabled:cursor-not-allowed'
                       }`}
                     >
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${key === 'claude' ? 'bg-orange-400' : 'bg-blue-400'}`} />
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${ENGINE_COLORS[key]}`} />
                       <span className="flex-1 text-left">{name}</span>
                       {isCurrent && (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
@@ -364,8 +365,8 @@ export default function TerminalToolbar() {
             New Chat
           </button>
 
-          {/* Resume Chat - only for Claude */}
-          {(activeTerminal?.engine === 'claude' || selectedEngine === 'claude') && (
+          {/* Resume Chat - for Claude and Codex (both support session resumption) */}
+          {(activeTerminal?.engine === 'claude' || activeTerminal?.engine === 'codex' || selectedEngine === 'claude' || selectedEngine === 'codex') && (
             <button
               onClick={handleContinueSession}
               disabled={!hasPty}

@@ -14,7 +14,8 @@ const INSTALL_COMMANDS: Record<string, string> = {
   claude: isWindows
     ? 'irm https://claude.ai/install.ps1 | iex'
     : 'curl -fsSL https://claude.ai/install.sh | bash',
-  gemini: 'npm install -g @google/gemini-cli'
+  gemini: 'npm install -g @google/gemini-cli',
+  codex: 'npm install -g @openai/codex'
 }
 
 const ENGINE_ICONS: Record<string, JSX.Element> = {
@@ -28,6 +29,12 @@ const ENGINE_ICONS: Record<string, JSX.Element> = {
   gemini: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  ),
+  codex: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6" />
+      <polyline points="8 6 2 12 8 18" />
     </svg>
   )
 }
@@ -106,7 +113,7 @@ export default function SetupBanner() {
               Your Friendly Terminal needs at least one AI coding assistant installed on your system to work. These are command-line tools that run locally on your machine.
             </p>
             <p>
-              <strong className="text-win-text">Claude Code</strong> is Anthropic's CLI assistant and <strong className="text-win-text">Gemini CLI</strong> is Google's. You only need one, but you can install both to switch between them.
+              <strong className="text-win-text">Claude Code</strong> is Anthropic's CLI assistant, <strong className="text-win-text">Gemini CLI</strong> is Google's, and <strong className="text-win-text">Codex CLI</strong> is OpenAI's. You only need one, but you can install multiple to switch between them.
             </p>
             <p>
               Click "Install" above for step-by-step instructions. After installing, restart the app and this message will go away.

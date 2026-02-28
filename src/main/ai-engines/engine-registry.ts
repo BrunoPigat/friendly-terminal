@@ -4,7 +4,7 @@ import { promisify } from 'util'
 const execFileAsync = promisify(execFile)
 
 export interface AIEngine {
-  id: 'claude' | 'gemini'
+  id: 'claude' | 'gemini' | 'codex'
   name: string
   command: string
   detectCommand: string
@@ -23,6 +23,12 @@ const ENGINE_DEFINITIONS: Omit<AIEngine, 'isAvailable'>[] = [
     name: 'Gemini CLI',
     command: 'gemini',
     detectCommand: 'gemini'
+  },
+  {
+    id: 'codex',
+    name: 'Codex CLI',
+    command: 'codex',
+    detectCommand: 'codex'
   }
 ]
 

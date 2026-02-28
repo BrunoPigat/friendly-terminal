@@ -84,8 +84,10 @@ async function readMdFiles(dirPath: string): Promise<{ name: string; content: st
  * Reads agent definitions from engine-specific directories.
  * Checks both project-level and user-level directories.
  */
+const ENGINE_DIR_MAP: Record<string, string> = { claude: '.claude', gemini: '.gemini', codex: '.agents' }
+
 export async function readAgents(engineId: string, projectPath: string): Promise<AgentEntry[]> {
-  const engineDir = engineId === 'claude' ? '.claude' : '.gemini'
+  const engineDir = ENGINE_DIR_MAP[engineId] ?? `.${engineId}`
   const dirs = [
     join(projectPath, engineDir, 'agents'),
     join(homedir(), engineDir, 'agents')
@@ -123,7 +125,7 @@ export async function readAgents(engineId: string, projectPath: string): Promise
  * Checks SKILL.md in subdirectories and legacy command files.
  */
 export async function readSkills(engineId: string, projectPath: string): Promise<SkillEntry[]> {
-  const engineDir = engineId === 'claude' ? '.claude' : '.gemini'
+  const engineDir = ENGINE_DIR_MAP[engineId] ?? `.${engineId}`
   const dirs: { path: string; type: 'skills' | 'commands' }[] = [
     { path: join(projectPath, engineDir, 'skills'), type: 'skills' },
     { path: join(homedir(), engineDir, 'skills'), type: 'skills' },

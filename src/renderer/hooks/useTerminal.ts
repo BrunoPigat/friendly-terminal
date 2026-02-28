@@ -62,7 +62,7 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
 
     // Capture the engine type for auto-starting (captured once at effect start)
     const terminalEntry = useTerminalStore.getState().terminals.get(terminalId)
-    const engineCommand = terminalEntry?.engine === 'claude' ? 'claude' : 'gemini'
+    const engineCommand = terminalEntry?.engine ?? 'claude'
 
     const terminal = new Terminal({
       ...DEFAULT_TERMINAL_OPTIONS,
