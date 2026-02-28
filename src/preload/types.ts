@@ -131,6 +131,9 @@ export interface IElectronAPI {
   gitConfigGet: (key: string) => Promise<string | null>
   gitConfigSet: (key: string, value: string) => Promise<void>
 
+  // Shell
+  shellOpenPath: (filePath: string) => Promise<string>
+
   // App
   getAppVersion: () => Promise<string>
 
@@ -144,6 +147,7 @@ export interface IElectronAPI {
   // Clipboard
   clipboardReadText: () => string
   onClipboardPaste: (callback: (text: string) => void) => () => void
+  showTerminalContextMenu: (hasSelection: boolean) => Promise<string | null>
 
   // Window controls
   windowMinimize: () => void

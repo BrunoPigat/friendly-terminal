@@ -4,7 +4,7 @@
   "description": "A friendly terminal for AI coding assistants",
   "main": "./out/main/index.js",
   "author": "",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",

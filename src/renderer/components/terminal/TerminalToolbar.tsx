@@ -355,7 +355,7 @@ export default function TerminalToolbar() {
           <button
             onClick={handleNewSession}
             disabled={terminals.size >= 4}
-            className="flex items-center gap-2 rounded-md bg-win-accent px-5 py-2 text-sm font-medium text-white hover:bg-win-accent-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 rounded-md bg-win-accent px-2 py-1 text-sm font-medium text-white hover:bg-win-accent-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -369,7 +369,7 @@ export default function TerminalToolbar() {
             <button
               onClick={handleContinueSession}
               disabled={!hasPty}
-              className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-2 py-1 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 3 19 12 5 21 5 3" />
@@ -386,7 +386,7 @@ export default function TerminalToolbar() {
             onClick={handleClearClick}
             disabled={!hasPty}
             title="Reset chat — start a fresh conversation"
-            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-2 py-1 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="1 4 1 10 7 10" />
@@ -400,7 +400,7 @@ export default function TerminalToolbar() {
             onClick={handleCompact}
             disabled={!hasPty}
             title="Summarize the conversation to free up context"
-            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-2 py-1 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="4 14 10 14 10 20" />
@@ -420,7 +420,7 @@ export default function TerminalToolbar() {
           <button
             onClick={() => setShowMemory(true)}
             title="View project memory file"
-            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-4 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text transition-colors"
+            className="flex items-center gap-2 rounded-md border border-win-border bg-win-card px-2 py-1 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-text transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />

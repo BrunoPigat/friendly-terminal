@@ -1,6 +1,8 @@
 import { create } from 'zustand'
+import type { ITheme } from '@xterm/xterm'
 import type { EngineId } from '@/lib/constants'
 import { DEFAULT_SIDEBAR_WIDTH } from '@/lib/constants'
+import { DEFAULT_THEME_ID, resolveTerminalTheme } from '@/lib/terminal-themes'
 import * as api from '@/lib/api'
 
 export type RightPanelTab = 'tips' | 'agents' | 'skills' | 'mcps' | 'git'
@@ -13,6 +15,8 @@ interface SettingsState {
   rightPanelActiveTab: RightPanelTab
   minifiedView: boolean
   showSettingsDialog: boolean
+  terminalTheme: string
+  terminalThemeCustom: ITheme | null
   loaded: boolean
 
   loadSettings: () => Promise<void>
@@ -23,6 +27,7 @@ interface SettingsState {
   setRightPanelActiveTab: (tab: RightPanelTab) => void
   toggleMinifiedView: () => void
   setShowSettingsDialog: (show: boolean) => void
+  getResolvedTheme: () => ITheme
 }
 
 interface SettingsData {
@@ -30,9 +35,11 @@ interface SettingsData {
   sidebarWidth: number
   sidebarCollapsed: boolean
   rightPanelWidth: number
+  terminalTheme: string
+  terminalThemeCustom: ITheme | null
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+export const useSettingsStore = create<SettingsState>((set, get) => ({
   defaultEngine: 'claude',
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
   sidebarCollapsed: false,
@@ -40,21 +47,27 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   rightPanelActiveTab: 'tips',
   minifiedView: false,
   showSettingsDialog: false,
+  terminalTheme: DEFAULT_THEME_ID,
+  terminalThemeCustom: null,
   loaded: false,
 
   loadSettings: async () => {
     try {
-      const [defaultEngine, sidebarWidth, sidebarCollapsed, rightPanelWidth] = await Promise.all([
+      const [defaultEngine, sidebarWidth, sidebarCollapsed, rightPanelWidth, terminalTheme, terminalThemeCustom] = await Promise.all([
         api.getSetting('defaultEngine'),
         api.getSetting('sidebarWidth'),
         api.getSetting('sidebarCollapsed'),
-        api.getSetting('rightPanelWidth')
+        api.getSetting('rightPanelWidth'),
+        api.getSetting('terminalTheme'),
+        api.getSetting('terminalThemeCustom')
       ])
       set({
         defaultEngine: (defaultEngine as EngineId) ?? 'claude',
         sidebarWidth: (sidebarWidth as number) ?? DEFAULT_SIDEBAR_WIDTH,
         sidebarCollapsed: (sidebarCollapsed as boolean) ?? false,
         rightPanelWidth: (rightPanelWidth as number) ?? 340,
+        terminalTheme: (terminalTheme as string) ?? DEFAULT_THEME_ID,
+        terminalThemeCustom: (terminalThemeCustom as ITheme | null) ?? null,
         loaded: true
       })
     } catch (err) {
@@ -90,6 +103,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
   setShowSettingsDialog: (show) => {
     set({ showSettingsDialog: show })
+  },
+
+  getResolvedTheme: () => {
+    const { terminalTheme, terminalThemeCustom } = get()
+    return resolveTerminalTheme(terminalTheme, terminalThemeCustom)
   },
 
   toggleMinifiedView: () => {

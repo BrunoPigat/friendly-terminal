@@ -3,6 +3,7 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
 import * as api from '@/lib/api'
+import { useSettingsStore } from '@/stores/settings-store'
 
 interface Props {
   engineName: string
@@ -48,6 +49,7 @@ const HINT_PATTERNS: Array<{ pattern: RegExp; hint: Hint }> = [
 ]
 
 export default function InstallEngineDialog({ engineName, installCommand, onClose }: Props) {
+  const theme = useSettingsStore((s) => s.getResolvedTheme())
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
@@ -75,13 +77,14 @@ export default function InstallEngineDialog({ engineName, installCommand, onClos
 
   useEffect(() => {
     const ptyId = ptyIdRef.current
+    const resolvedTheme = useSettingsStore.getState().getResolvedTheme()
     const terminal = new Terminal({
       fontSize: 13,
       fontFamily: "'Cascadia Code', 'Consolas', monospace",
       theme: {
-        background: '#1E1E1E',
-        foreground: '#CCCCCC',
-        cursor: '#CCCCCC'
+        background: resolvedTheme.background,
+        foreground: resolvedTheme.foreground,
+        cursor: resolvedTheme.cursor
       },
       cursorBlink: false,
       disableStdin: true,
@@ -188,7 +191,8 @@ export default function InstallEngineDialog({ engineName, installCommand, onClos
 
         <div
           ref={containerRef}
-          className="h-64 w-full rounded-md border border-win-border bg-[#1E1E1E] p-1"
+          className="h-64 w-full rounded-md border border-win-border p-1"
+          style={{ backgroundColor: theme.background }}
         />
 
         {/* Contextual hints based on detected output patterns */}

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSettingsStore } from '@/stores/settings-store'
 import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
 import * as api from '@/lib/api'
+import TerminalThemeSection from './TerminalThemeSection'
 
 export default function SettingsDialog() {
   const show = useSettingsStore((s) => s.showSettingsDialog)
@@ -9,7 +10,7 @@ export default function SettingsDialog() {
   const defaultEngine = useSettingsStore((s) => s.defaultEngine)
   const updateSetting = useSettingsStore((s) => s.updateSetting)
 
-  const [activeSection, setActiveSection] = useState<'general' | 'git' | 'about'>('general')
+  const [activeSection, setActiveSection] = useState<'general' | 'terminal' | 'git' | 'about'>('general')
   const [gitName, setGitName] = useState('')
   const [gitEmail, setGitEmail] = useState('')
   const [gitAvailable, setGitAvailable] = useState<boolean | null>(null)
@@ -76,7 +77,7 @@ export default function SettingsDialog() {
 
         {/* Section tabs */}
         <div className="flex border-b border-win-border bg-win-surface">
-          {(['general', 'git', 'about'] as const).map((section) => (
+          {(['general', 'terminal', 'git', 'about'] as const).map((section) => (
             <button
               key={section}
               onClick={() => setActiveSection(section)}
@@ -95,7 +96,7 @@ export default function SettingsDialog() {
         </div>
 
         {/* Content */}
-        <div className="p-5 min-h-[200px]">
+        <div className="p-5 min-h-[200px] max-h-[60vh] overflow-y-auto">
           {activeSection === 'general' && (
             <div className="space-y-4">
               <div>
@@ -116,6 +117,10 @@ export default function SettingsDialog() {
                 </p>
               </div>
             </div>
+          )}
+
+          {activeSection === 'terminal' && (
+            <TerminalThemeSection />
           )}
 
           {activeSection === 'git' && (

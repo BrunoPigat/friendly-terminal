@@ -43,10 +43,10 @@ function ChatBubble({
   return (
     <div className="flex flex-col items-start gap-1" style={{ animationDelay: `${index * 80}ms` }}>
       {/* SMS Bubble */}
-      <div className="relative max-w-[90%] rounded-2xl rounded-bl-sm bg-win-card px-4 py-2.5 shadow-sm border border-win-border">
+      <div className="relative max-w-[90%] rounded-2xl rounded-bl-sm px-4 py-2.5 border border-win-border">
         {/* Tail */}
         <div className="absolute -bottom-0 -left-1.5 w-3 h-3 overflow-hidden">
-          <div className="absolute -right-2 top-0 w-4 h-4 bg-win-card rounded-br-xl" />
+          <div className="absolute -right-2 top-0 w-4 h-4 rounded-br-xl" />
         </div>
         <div className="prose prose-sm max-w-none
           prose-p:text-sm prose-p:leading-relaxed prose-p:text-win-text prose-p:m-0

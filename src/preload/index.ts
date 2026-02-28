@@ -67,6 +67,9 @@ const api: IElectronAPI = {
   gitConfigGet: (key) => ipcRenderer.invoke('git:config-get', key),
   gitConfigSet: (key, value) => ipcRenderer.invoke('git:config-set', key, value),
 
+  // Shell
+  shellOpenPath: (filePath) => ipcRenderer.invoke('shell:open-path', filePath),
+
   // App
   getAppVersion: () => ipcRenderer.invoke('app:version'),
 
@@ -83,6 +86,7 @@ const api: IElectronAPI = {
 
   // Clipboard
   clipboardReadText: () => clipboard.readText(),
+  showTerminalContextMenu: (hasSelection) => ipcRenderer.invoke('context-menu:terminal', hasSelection),
   onClipboardPaste: (callback) => {
     const listener = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
     ipcRenderer.on('clipboard:paste', listener)

@@ -18,7 +18,9 @@ const settingsStore = new Store({
     defaultEngine: 'claude',
     sidebarWidth: 280,
     sidebarCollapsed: false,
-    rightPanelWidth: 400
+    rightPanelWidth: 400,
+    terminalTheme: 'vscode-dark',
+    terminalThemeCustom: null
   }
 })
 
@@ -185,6 +187,33 @@ function registerGlobalIpc(): void {
 
   ipcMain.handle('engines:is-in-session', async (_event, intent: string) => {
     return isInSessionCommand(intent as Parameters<typeof isInSessionCommand>[0])
+  })
+
+  // Shell
+  ipcMain.handle('shell:open-path', async (_event, filePath: string) => {
+    return shell.openPath(filePath)
+  })
+
+  // Terminal context menu (right-click)
+  ipcMain.handle('context-menu:terminal', async (event, hasSelection: boolean) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return null
+
+    return new Promise<string | null>((resolve) => {
+      let resolved = false
+      const items: Electron.MenuItemConstructorOptions[] = []
+
+      if (hasSelection) {
+        items.push({ label: 'Copy', click: () => { resolved = true; resolve('copy') } })
+      }
+      items.push({ label: 'Paste', click: () => { resolved = true; resolve('paste') } })
+
+      const menu = Menu.buildFromTemplate(items)
+      menu.popup({
+        window: win,
+        callback: () => { if (!resolved) resolve(null) }
+      })
+    })
   })
 
   // App info

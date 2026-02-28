@@ -4,6 +4,7 @@ import { FitAddon } from '@xterm/addon-fit'
 import { WebglAddon } from '@xterm/addon-webgl'
 import { DEFAULT_TERMINAL_OPTIONS } from '@/lib/constants'
 import { useTerminalStore } from '@/stores/terminal-store'
+import { useSettingsStore } from '@/stores/settings-store'
 import { useSplitViewStore } from '@/stores/split-view-store'
 import * as api from '@/lib/api'
 
@@ -65,9 +66,12 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
 
     const terminal = new Terminal({
       ...DEFAULT_TERMINAL_OPTIONS,
+      theme: useSettingsStore.getState().getResolvedTheme(),
       customKeyEventHandler: (event: KeyboardEvent) => {
         // Ctrl+C: copy selection to clipboard (like VS Code), otherwise send SIGINT
         if (event.ctrlKey && event.key === 'c' && terminal.hasSelection()) {
+          navigator.clipboard.writeText(terminal.getSelection())
+          terminal.clearSelection()
           return false
         }
         // Ctrl+Shift+C / Ctrl+Shift+V: let browser handle
@@ -86,10 +90,44 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
     terminal.open(container)
 
     // Track which terminal has focus for cross-panel clipboard paste routing
+    // AND update activeTerminalId so sidebar context buttons target the right terminal
     const focusHandler = () => {
       useSplitViewStore.getState().setFocusedTerminalId(terminalId)
+      // Set this terminal as active so file attach, tips, and toolbar target it
+      const panel = useSplitViewStore.getState().getPanelByTerminalId(terminalId)
+      if (panel && panel.activeTerminalId !== terminalId) {
+        useSplitViewStore.getState().setActiveTerminal(panel.panelId, terminalId)
+      }
     }
     container.addEventListener('focusin', focusHandler)
+
+    // Right-click context menu (Copy / Paste)
+    const contextMenuHandler = (e: MouseEvent) => {
+      e.preventDefault()
+      api.showTerminalContextMenu(terminal.hasSelection()).then((action) => {
+        if (action === 'copy' && terminal.hasSelection()) {
+          navigator.clipboard.writeText(terminal.getSelection())
+          terminal.clearSelection()
+        } else if (action === 'paste') {
+          const text = window.api.clipboardReadText()
+          if (text && ptyReadyRef.current) {
+            api.ptyWrite(terminalId, text)
+          }
+        }
+      })
+    }
+    container.addEventListener('contextmenu', contextMenuHandler)
+
+    // Subscribe to theme changes for live updates
+    let prevThemeId = useSettingsStore.getState().terminalTheme
+    let prevCustom = useSettingsStore.getState().terminalThemeCustom
+    const unsubTheme = useSettingsStore.subscribe((state) => {
+      if (state.terminalTheme !== prevThemeId || state.terminalThemeCustom !== prevCustom) {
+        prevThemeId = state.terminalTheme
+        prevCustom = state.terminalThemeCustom
+        terminal.options.theme = state.getResolvedTheme()
+      }
+    })
 
     try {
       const webglAddon = new WebglAddon()
@@ -129,13 +167,47 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
         // Mark the terminal as having a live PTY so toolbar buttons (Clear, Compact) enable
         updateTerminal(terminalId, { ptyId: terminalId })
 
+        // Sends clear + engine command as soon as the shell is ready
+        const isWindows = navigator.userAgent.includes('Windows')
+        const clearCmd = isWindows ? 'cls' : 'clear'
+        let awaitingShellPrompt = false
+
+        const sendEngineCommand = () => {
+          if (!ptyReadyRef.current || engineCommandSentRef.current) return
+          console.log('[useTerminal] 📤 Sending engine command:', engineCommand, 'to terminal:', terminalId)
+          api.ptyWrite(terminalId, `${clearCmd}\r`)
+          api.ptyWrite(terminalId, `${engineCommand}\r`)
+          engineCommandSentRef.current = true
+
+          // Fallback timeout — if engine doesn't show a prompt within 15s, clear loading anyway
+          loadingTimeoutRef.current = setTimeout(() => {
+            if (!engineReadyRef.current) {
+              console.log('[useTerminal] ⏱️ Fallback timeout: setting isLoading=false for', terminalId)
+              updateTerminal(terminalId, { isLoading: false })
+              engineReadyRef.current = true
+            }
+          }, 15000)
+        }
+
         // PTY → Terminal
         disposeDataRef.current = api.onPtyData((id, data) => {
           if (id === terminalId) {
             terminal.write(data)
 
-            // Only detect engine readiness AFTER the engine command has been sent
-            // (ignore shell prompts that appear before the engine starts)
+            // Phase 1: Detect shell prompt → immediately send engine command
+            // Instead of a blind 1s delay, we watch for the shell's first prompt.
+            if (awaitingShellPrompt && !engineCommandSentRef.current) {
+              const clean = data.replace(/\x1b(?:\[[0-9;?]*[a-zA-Z]|\][^\x07]*\x07|\(B)/g, '')
+              // PowerShell: "PS path> ", bash: "user@host:~$ ", zsh: "% "
+              if (clean.includes('> ') || clean.trimEnd().endsWith('>') ||
+                  clean.includes('$ ') || clean.trimEnd().endsWith('$') ||
+                  clean.includes('% ')) {
+                awaitingShellPrompt = false
+                sendEngineCommand()
+              }
+            }
+
+            // Phase 2: Detect engine readiness AFTER the engine command has been sent
             if (engineCommandSentRef.current && !engineReadyRef.current) {
               // Strip all ANSI escape sequences (SGR, cursor, erase, OSC, etc.)
               const cleanData = data.replace(/\x1b(?:\[[0-9;?]*[a-zA-Z]|\][^\x07]*\x07|\(B)/g, '')
@@ -191,41 +263,17 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
         if (!engineStartedPtys.has(terminalId) && terminalEntry) {
           engineStartedPtys.add(terminalId)
           console.log('[useTerminal] 🚀 Will auto-start engine:', engineCommand, 'for terminal:', terminalId)
-          // Wait for the shell to be ready, then cd to project dir and send the command
+          // Watch PTY output for the shell prompt instead of a blind delay.
+          // The PTY already starts in the correct directory via the cwd spawn option.
+          awaitingShellPrompt = true
+
+          // Fallback: if shell prompt isn't detected within 3s, send command anyway
           setTimeout(() => {
-            if (!ptyReadyRef.current) {
-              console.warn('[useTerminal] ⚠️ PTY not ready, cannot send engine command for:', terminalId)
-              updateTerminal(terminalId, { isLoading: false })
-              return
-            }
-
-            // Ensure we're in the project directory before starting the engine
-            if (cwd) {
-              console.log('[useTerminal] 📂 Changing to project dir:', cwd)
-              api.ptyWrite(terminalId, `cd "${cwd}"\r`)
-            }
-
-            // Small delay after cd to ensure the shell processes it before engine starts
-            setTimeout(() => {
-              if (!ptyReadyRef.current) return
-
-              // Clear the terminal so the user starts with a clean screen
-              api.ptyWrite(terminalId, 'clear\r')
-
-              console.log('[useTerminal] 📤 Sending engine command:', engineCommand, 'to terminal:', terminalId)
-              api.ptyWrite(terminalId, `${engineCommand}\r`)
-              engineCommandSentRef.current = true
-
-              // Start fallback timeout — if engine doesn't show a prompt within 15s, clear loading anyway
-              loadingTimeoutRef.current = setTimeout(() => {
-                if (!engineReadyRef.current) {
-                  console.log('[useTerminal] ⏱️ Fallback timeout: setting isLoading=false for', terminalId)
-                  updateTerminal(terminalId, { isLoading: false })
-                  engineReadyRef.current = true
-                }
-              }, 15000)
-            }, 500)
-          }, 1000)
+            if (!awaitingShellPrompt) return
+            awaitingShellPrompt = false
+            console.log('[useTerminal] ⏱️ Shell prompt fallback for', terminalId)
+            sendEngineCommand()
+          }, 3000)
         } else {
           console.log('[useTerminal] ⏭️ Skipping auto-start (already started or no terminal entry)', {
             alreadyStarted: engineStartedPtys.has(terminalId),
@@ -262,6 +310,8 @@ export function useTerminal({ terminalId, cwd }: UseTerminalOptions) {
       ptyReadyRef.current = false
       resizeObserver.disconnect()
       container.removeEventListener('focusin', focusHandler)
+      container.removeEventListener('contextmenu', contextMenuHandler)
+      unsubTheme()
       disposeDataRef.current?.()
       disposeExitRef.current?.()
       disposePasteRef.current?.()

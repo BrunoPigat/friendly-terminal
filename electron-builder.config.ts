@@ -39,8 +39,8 @@ const config: Configuration = {
   },
   publish: {
     provider: 'github',
-    owner: '',
-    repo: 'your-friendly-terminal'
+    owner: 'BrunoPigat',
+    repo: 'friendly-terminal'
   }
 }
 

@@ -193,12 +193,18 @@ export const gitInit = (cwd: string) => getApi().gitInit(cwd)
 export const gitConfigGet = (key: string) => getApi().gitConfigGet(key)
 export const gitConfigSet = (key: string, value: string) => getApi().gitConfigSet(key, value)
 
+// Shell
+export const shellOpenPath = (filePath: string) => getApi().shellOpenPath(filePath)
+
 // App
 export const getAppVersion = () => getApi().getAppVersion()
 
 // Settings
 export const getSetting = (key: string) => getApi().getSetting(key)
 export const setSetting = (key: string, value: unknown) => getApi().setSetting(key, value)
+
+// Clipboard
+export const showTerminalContextMenu = (hasSelection: boolean) => getApi().showTerminalContextMenu(hasSelection)
 
 // Window
 export const windowMinimize = () => getApi().windowMinimize()

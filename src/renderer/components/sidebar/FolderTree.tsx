@@ -98,16 +98,6 @@ function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { r
     [rootPath]
   )
 
-  const handleAddDirToContext = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      if (!activeTerminalId) return
-      const command = `/add-dir ${node.data.path}\n`
-      api.ptyWrite(activeTerminalId, command)
-    },
-    [activeTerminalId, node.data.path]
-  )
-
   const handleAddFileToContext = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation()
@@ -117,6 +107,14 @@ function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { r
       api.ptyWrite(activeTerminalId, ref)
     },
     [activeTerminalId, node.data.path, getRelativePath]
+  )
+
+  const handleOpenFile = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      api.shellOpenPath(node.data.path)
+    },
+    [node.data.path]
   )
 
   const isDir = node.data.isDirectory
@@ -159,30 +157,34 @@ function FolderNode({ node, style, rootPath }: NodeRendererProps<FileNode> & { r
       {/* Name */}
       <span className="truncate text-win-text">{node.data.name}</span>
 
-      {/* Add to chat */}
-      {isDir ? (
-        <button
-          onClick={handleAddDirToContext}
-          className="ml-auto flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] text-win-text-tertiary hover:bg-win-accent-subtle hover:text-win-accent transition-colors"
-          title="Add this folder to the chat context"
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span>Add</span>
-        </button>
-      ) : (
-        <button
-          onClick={handleAddFileToContext}
-          className="ml-auto flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] text-win-text-tertiary hover:bg-win-accent-subtle hover:text-win-accent transition-colors"
-          title="Attach this file to the chat context"
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-          </svg>
-          <span>Attach</span>
-        </button>
+      {/* File action buttons */}
+      {!isDir && (
+        <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Attach to chat */}
+          <button
+            onClick={handleAddFileToContext}
+            className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] text-win-text-tertiary hover:bg-win-accent-subtle hover:text-win-accent transition-colors"
+            title="Attach this file to the chat context"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+            <span>Attach</span>
+          </button>
+          {/* Open in OS default program */}
+          <button
+            onClick={handleOpenFile}
+            className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] text-win-text-tertiary hover:bg-win-accent-subtle hover:text-win-accent transition-colors"
+            title="Open with default program"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            <span>Open</span>
+          </button>
+        </div>
       )}
     </div>
   )
