@@ -29,7 +29,7 @@ jobs:
         run: npm run build
 
       - name: Package installer
-        run: npx electron-builder --win --config
+        run: npx electron-builder --win --config electron-builder.config.ts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
