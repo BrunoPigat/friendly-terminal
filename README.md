@@ -166,13 +166,125 @@ src/
 
 ## Contributing
 
-Contributions are welcome! Feel free to open an issue or submit a pull request.
+Contributions are welcome! This project exists to make AI-powered development accessible to **non-technical users** — designers, business owners, students, and anyone with ideas. Every change should serve that goal.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Guiding Principle
+
+> If a feature, fix, or improvement doesn't make the experience better for someone who has never opened a terminal before, it needs a strong justification.
+
+Before contributing, ask yourself:
+- **Does this reduce friction** for a non-technical user?
+- **Does this prevent confusion** or remove a footgun?
+- **Is this discoverable** without reading documentation?
+
+### Reporting Issues
+
+Use [GitHub Issues](https://github.com/BrunoPigat/friendly-terminal/issues) to report bugs or suggest features. Before opening a new issue, search existing issues to avoid duplicates.
+
+**Bug reports** should include:
+
+- **What you expected** to happen
+- **What actually happened** (include error messages or screenshots if possible)
+- **Steps to reproduce** — be specific: _"I opened a project, clicked + New Chat, right-clicked the terminal, and nothing happened"_
+- **Environment**: your OS version (e.g. Windows 11 23H2) and the app version (Settings > About)
+- **Severity**: does it crash the app, block your workflow, or is it a minor annoyance?
+
+**Feature requests** should explain:
+
+- **The use case**, framed from a non-technical user's perspective. _"As someone who doesn't know git, I want to undo my last change so I don't have to start over"_ is much more actionable than _"Add git revert support"_.
+- **Why existing features don't cover it** — maybe the functionality exists but is hard to find, and the real fix is better discoverability.
+- **How you imagine it working** — a rough description is fine, no mockups required.
+
+If you're unsure whether something is a bug or a feature request, open it anyway. We'll help sort it out.
+
+### Submitting Changes
+
+1. **Fork** the repository and clone your fork:
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/friendly-terminal.git
+   cd friendly-terminal
+   npm install && npm run rebuild
+   ```
+2. **Create a branch** from `master` with a descriptive name that includes the type of change:
+   ```bash
+   git checkout -b fix/copy-paste-not-working
+   git checkout -b feature/theme-selector
+   git checkout -b docs/update-contributing-guide
+   ```
+   Use prefixes like `fix/`, `feature/`, `docs/`, `refactor/`, or `chore/`.
+3. **Make your changes** — keep them focused on a single concern. If you find an unrelated bug while working, open a separate issue or PR for it.
+4. **Test locally** with `npm run dev`:
+   - Verify your change works as expected
+   - Check that existing features aren't broken (open a project, start a terminal, use the sidebar, switch themes, etc.)
+   - Run `npm run lint` to catch code style issues
+   - If tests exist for the area you changed, run `npm test`
+5. **Commit** with a clear message. The first line should summarize the change; the body should explain _why_ this change is needed:
+   ```bash
+   git commit -m "Fix copy from terminal not working
+
+   xterm.js selections are internal canvas state, not native DOM
+   selections. The browser's Ctrl+C handler sees nothing to copy.
+   Now explicitly reads terminal.getSelection() and writes to
+   clipboard via navigator.clipboard API."
+   ```
+   - Use imperative mood: _"Fix bug"_, not _"Fixed bug"_ or _"Fixes bug"_
+   - Keep the first line under 72 characters
+   - Reference related issues with `Closes #123` or `Relates to #456`
+6. **Push** to your fork and open a **Pull Request** against `master`:
+   ```bash
+   git push origin fix/copy-paste-not-working
+   ```
+   Then go to the original repository on GitHub — you'll see a prompt to create a PR.
+
+### Pull Request Guidelines
+
+Your PR description is the first thing reviewers read. A good description speeds up the review and increases the chance of a quick merge.
+
+**Structure your PR description like this:**
+
+```markdown
+## Summary
+Brief explanation of what this PR does and why.
+
+## User Impact
+How does this change improve the experience for a non-technical user?
+
+## Changes
+- Bullet list of specific changes made
+- One line per logical change
+
+## Test Plan
+- [ ] Step-by-step instructions to verify the change
+- [ ] Include edge cases you checked
+- [ ] Note anything that should be regression-tested
+
+## Screenshots (if applicable)
+Before/after screenshots for any visual changes.
+```
+
+**General rules:**
+
+- **One concern per PR.** A bug fix and a new feature should be separate PRs, even if you found the bug while building the feature. This makes reviews faster and reverts safer.
+- **Keep diffs small.** PRs under 300 lines get reviewed in hours. PRs over 1000 lines get reviewed in days (or never). If your change is large, consider splitting it into a stack of smaller PRs.
+- **No drive-by refactors.** If you're fixing a bug, don't also rename variables in unrelated files or add type annotations to code you didn't change. Clean-up PRs are welcome, but they should be separate.
+- **Don't break existing UX.** If your change alters how something currently works, call it out explicitly in the description and explain why the new behavior is better for users. Breaking changes without justification will be rejected.
+- **Simple > clever.** This codebase is maintained by a small team. Write code that's easy to read, easy to debug, and easy to delete. If a reviewer can't understand your change in 5 minutes, it's too complex.
+- **Respond to feedback.** If a reviewer requests changes, address every comment — either make the change or explain why you disagree. Don't leave comments unresolved.
+
+### What We Look For
+
+- Improvements to onboarding and first-run experience
+- Better error messages and recovery (users shouldn't see stack traces)
+- Accessibility and inclusive design
+- Performance improvements that reduce wait times
+- Bug fixes that remove paper cuts
+
+### What We'll Push Back On
+
+- Features that add complexity without a clear non-tech user benefit
+- Changes that require users to understand technical concepts (git internals, shell syntax, etc.)
+- Dependencies that significantly increase bundle size without strong justification
+- Cosmetic-only changes with no functional improvement
 
 ## License
 
