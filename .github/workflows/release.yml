@@ -28,7 +28,18 @@ jobs:
       - name: Build Electron app
         run: npm run build
 
-      - name: Package & publish to GitHub Releases
-        run: npx electron-builder --win --config --publish always
+      - name: Package installer
+        run: npx electron-builder --win --config
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
