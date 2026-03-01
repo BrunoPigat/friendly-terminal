@@ -5,7 +5,20 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin({ exclude: ['electron-store'] })],
+    plugins: [
+      externalizeDepsPlugin({
+        exclude: ['electron-store', 'electron-updater', 'ajv', 'ajv-formats']
+      })
+    ],
+    resolve: {
+      alias: {
+        'ajv/dist/runtime/equal': resolve('node_modules/ajv/dist/runtime/equal.js'),
+        'ajv/dist/runtime/ucs2length': resolve('node_modules/ajv/dist/runtime/ucs2length.js'),
+        'ajv/dist/runtime/uri': resolve('node_modules/ajv/dist/runtime/uri.js'),
+        'ajv/dist/runtime/validation_error': resolve('node_modules/ajv/dist/runtime/validation_error.js'),
+        'ajv-formats/dist/formats': resolve('node_modules/ajv-formats/dist/formats.js')
+      }
+    },
     build: {
       rollupOptions: {
         external: ['node-pty', 'ws']
