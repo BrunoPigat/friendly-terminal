@@ -119,6 +119,14 @@ interface IElectronAPI {
 
   onGuiAction: (callback: (payload: unknown) => void) => () => void
 
+  updaterCheck: () => Promise<void>
+  updaterDownload: () => Promise<void>
+  updaterInstall: () => void
+  onUpdateAvailable: (callback: (info: { version: string; releaseDate: string; releaseNotes: string }) => void) => () => void
+  onUpdateDownloaded: (callback: (info: { version: string }) => void) => () => void
+  onUpdateProgress: (callback: (progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void) => () => void
+  onUpdateError: (callback: (error: { message: string }) => void) => () => void
+
   windowMinimize: () => void
   windowMaximize: () => void
   windowClose: () => void
@@ -205,6 +213,15 @@ export const setSetting = (key: string, value: unknown) => getApi().setSetting(k
 
 // Clipboard
 export const showTerminalContextMenu = (hasSelection: boolean) => getApi().showTerminalContextMenu(hasSelection)
+
+// Updater
+export const updaterCheck = () => getApi().updaterCheck()
+export const updaterDownload = () => getApi().updaterDownload()
+export const updaterInstall = () => getApi().updaterInstall()
+export const onUpdateAvailable = (cb: (info: { version: string; releaseDate: string; releaseNotes: string }) => void) => getApi().onUpdateAvailable(cb)
+export const onUpdateDownloaded = (cb: (info: { version: string }) => void) => getApi().onUpdateDownloaded(cb)
+export const onUpdateProgress = (cb: (progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void) => getApi().onUpdateProgress(cb)
+export const onUpdateError = (cb: (error: { message: string }) => void) => getApi().onUpdateError(cb)
 
 // Window
 export const windowMinimize = () => getApi().windowMinimize()

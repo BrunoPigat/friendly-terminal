@@ -7,14 +7,17 @@ let wss: WebSocketServer | null = null
 let serverPort = 0
 let portFilePath: string | null = null
 
-const VALID_TABS = ['tips', 'agents', 'skills', 'mcps'] as const
+const VALID_TABS = ['tips', 'agents', 'skills', 'mcps', 'canvas'] as const
 type Tab = (typeof VALID_TABS)[number]
 
 const VALID_CONNECTION_TYPES = ['sse', 'stdio'] as const
 
+const VALID_CANVAS_MODES = ['panel', 'full', 'bottom'] as const
+
 interface GuiAction {
-  action: 'switch_tab' | 'open_panel' | 'close_panel' | 'add_connection'
+  action: 'switch_tab' | 'open_panel' | 'close_panel' | 'add_connection' | 'set_canvas_mode'
   tab?: string
+  mode?: string
   name?: string
   type?: string
   url?: string
@@ -106,6 +109,14 @@ function handleAction(
 
     case 'close_panel': {
       mainWindow.webContents.send('gui:action', { action: 'close_panel' })
+      return { success: true }
+    }
+
+    case 'set_canvas_mode': {
+      if (!data.mode || !VALID_CANVAS_MODES.includes(data.mode as (typeof VALID_CANVAS_MODES)[number])) {
+        return { success: false, error: `Invalid canvas mode "${data.mode}". Must be one of: ${VALID_CANVAS_MODES.join(', ')}` }
+      }
+      mainWindow.webContents.send('gui:action', { action: 'set_canvas_mode', mode: data.mode })
       return { success: true }
     }
 

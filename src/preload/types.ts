@@ -149,6 +149,15 @@ export interface IElectronAPI {
   onClipboardPaste: (callback: (text: string) => void) => () => void
   showTerminalContextMenu: (hasSelection: boolean) => Promise<string | null>
 
+  // Updater
+  updaterCheck: () => Promise<void>
+  updaterDownload: () => Promise<void>
+  updaterInstall: () => void
+  onUpdateAvailable: (callback: (info: { version: string; releaseDate: string; releaseNotes: string }) => void) => () => void
+  onUpdateDownloaded: (callback: (info: { version: string }) => void) => () => void
+  onUpdateProgress: (callback: (progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void) => () => void
+  onUpdateError: (callback: (error: { message: string }) => void) => () => void
+
   // Window controls
   windowMinimize: () => void
   windowMaximize: () => void

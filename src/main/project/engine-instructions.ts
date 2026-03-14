@@ -20,12 +20,16 @@ function getDefaultInstructions(engineId: string, projectName: string): string {
   const autoTipRule =
     'After every response, run the `tip-creator` skill to analyze the conversation and replace `tips.md` with fresh actionable next steps. Always overwrite the entire file — never append. Do this silently at the end — do not mention it to the user.'
 
+  const canvasRule =
+    'You have a `render_ui` MCP tool that builds a project insight interface beside the terminal. The terminal always stays visible. Use `mode: "full"` to replace the sidebar and right panel with your UI — this is the main mode. The UI should help the user navigate and understand what matters about the project: file previews, structure overviews, key metrics, dependency maps, important patterns. Follow the app\'s Windows 11 light/bright minimalist design language (light backgrounds, subtle borders, clean typography, Segoe UI). The canvas can read project files at runtime via `yft.readFile(path)` and `yft.readDir(path)`. Never ask what the UI should look like — analyze the project and design the best interface. Do NOT rebuild the UI on every response — only update it when the user asks or when a genuinely important insight has been discovered. Use the `ui-creator` skill for guidance.'
+
   if (engineId === 'gemini') {
     return `# Project: ${projectName}
 
 ## Rules
 
 - ${autoTipRule}
+- ${canvasRule}
 `
   }
 
@@ -35,6 +39,7 @@ function getDefaultInstructions(engineId: string, projectName: string): string {
 ## Rules
 
 - ${autoTipRule}
+- ${canvasRule}
 `
 }
 

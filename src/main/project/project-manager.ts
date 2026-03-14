@@ -199,7 +199,8 @@ async function addDefaultGuiMcp(projectDir: string): Promise<void> {
       command: 'node',
       args: [scriptPath],
       env: {
-        YFT_GUI_PORT_FILE: portFilePath
+        YFT_GUI_PORT_FILE: portFilePath,
+        YFT_PROJECT_PATH: projectDir
       }
     })
     console.log(`[project-manager] Added gui-control MCP server to ${projectDir}`)
@@ -240,13 +241,16 @@ async function createDefaultPermissions(projectDir: string): Promise<void> {
       currentAllow.push(guiPattern)
     }
 
-    // Allow all tools to modify tips.md in the project root
-    const tipsPatterns = [
+    // Allow all tools to modify tips.md and canvas.html in the project root
+    const filePatterns = [
       'Edit(tips.md)',
       'Write(tips.md)',
-      'Bash(*tips.md*)'
+      'Bash(*tips.md*)',
+      'Edit(canvas.html)',
+      'Write(canvas.html)',
+      'Bash(*canvas.html*)'
     ]
-    for (const pattern of tipsPatterns) {
+    for (const pattern of filePatterns) {
       if (!currentAllow.includes(pattern)) {
         currentAllow.push(pattern)
       }

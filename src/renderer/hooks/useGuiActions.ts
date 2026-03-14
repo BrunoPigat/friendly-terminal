@@ -3,11 +3,13 @@ import { useSettingsStore } from '@/stores/settings-store'
 import { useProjectStore } from '@/stores/project-store'
 import * as api from '@/lib/api'
 
-type RightPanelTab = 'tips' | 'agents' | 'skills' | 'mcps'
+type RightPanelTab = 'tips' | 'agents' | 'skills' | 'mcps' | 'canvas'
+type CanvasMode = 'panel' | 'full' | 'bottom'
 
 interface GuiActionPayload {
-  action: 'switch_tab' | 'open_panel' | 'close_panel' | 'add_connection'
+  action: 'switch_tab' | 'open_panel' | 'close_panel' | 'add_connection' | 'set_canvas_mode'
   tab?: RightPanelTab
+  mode?: CanvasMode
   name?: string
   type?: 'sse' | 'stdio'
   url?: string
@@ -33,6 +35,15 @@ export function useGuiActions(): void {
         case 'open_panel':
         case 'close_panel':
           // Right panel is always active — no-op
+          break
+
+        case 'set_canvas_mode':
+          if (payload.mode) {
+            store.setCanvasMode(payload.mode)
+            if (payload.mode === 'panel') {
+              store.setRightPanelActiveTab('canvas')
+            }
+          }
           break
 
         case 'add_connection': {

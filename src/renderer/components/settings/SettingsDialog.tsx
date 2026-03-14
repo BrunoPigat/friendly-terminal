@@ -4,6 +4,13 @@ import { ENGINE_NAMES, type EngineId } from '@/lib/constants'
 import * as api from '@/lib/api'
 import TerminalThemeSection from './TerminalThemeSection'
 
+type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error'
+
+interface UpdateInfo {
+  version: string
+  releaseDate?: string
+}
+
 export default function SettingsDialog() {
   const show = useSettingsStore((s) => s.showSettingsDialog)
   const setShow = useSettingsStore((s) => s.setShowSettingsDialog)
@@ -16,8 +23,37 @@ export default function SettingsDialog() {
   const [gitAvailable, setGitAvailable] = useState<boolean | null>(null)
   const [appVersion, setAppVersion] = useState('')
 
+  // Update state
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [downloadPercent, setDownloadPercent] = useState(0)
+  const [updateError, setUpdateError] = useState<string | null>(null)
+
   const nameTimer = useRef<ReturnType<typeof setTimeout>>()
   const emailTimer = useRef<ReturnType<typeof setTimeout>>()
+
+  // Listen for update events
+  useEffect(() => {
+    const unsubs = [
+      api.onUpdateAvailable((info) => {
+        setUpdateStatus('available')
+        setUpdateInfo({ version: info.version, releaseDate: info.releaseDate })
+        setUpdateError(null)
+      }),
+      api.onUpdateDownloaded((info) => {
+        setUpdateStatus('ready')
+        setUpdateInfo((prev) => prev ? { ...prev, version: info.version } : { version: info.version })
+      }),
+      api.onUpdateProgress((progress) => {
+        setDownloadPercent(Math.round(progress.percent))
+      }),
+      api.onUpdateError((err) => {
+        setUpdateStatus('error')
+        setUpdateError(err.message)
+      })
+    ]
+    return () => unsubs.forEach((u) => u())
+  }, [])
 
   // Load git config + app version on open
   useEffect(() => {
@@ -51,6 +87,33 @@ export default function SettingsDialog() {
     emailTimer.current = setTimeout(() => {
       if (value.trim()) api.gitConfigSet('user.email', value.trim()).catch(() => {})
     }, 500)
+  }, [])
+
+  const handleCheckForUpdates = useCallback(() => {
+    setUpdateStatus('checking')
+    setUpdateError(null)
+    api.updaterCheck().then(() => {
+      // If no update-available event fires within 5s, assume up to date
+      setTimeout(() => {
+        setUpdateStatus((s) => s === 'checking' ? 'idle' : s)
+      }, 5000)
+    }).catch(() => {
+      setUpdateStatus('error')
+      setUpdateError('Failed to check for updates')
+    })
+  }, [])
+
+  const handleDownloadUpdate = useCallback(() => {
+    setUpdateStatus('downloading')
+    setDownloadPercent(0)
+    api.updaterDownload().catch(() => {
+      setUpdateStatus('error')
+      setUpdateError('Download failed')
+    })
+  }, [])
+
+  const handleInstallUpdate = useCallback(() => {
+    api.updaterInstall()
   }, [])
 
   if (!show) return null
@@ -184,11 +247,103 @@ export default function SettingsDialog() {
           )}
 
           {activeSection === 'about' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <p className="text-xs text-win-text-tertiary">Version</p>
                 <p className="text-sm font-medium text-win-text">{appVersion || '...'}</p>
               </div>
+
+              {/* Update section */}
+              <div className="rounded-md border border-win-border bg-win-surface p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-win-text-secondary">Updates</p>
+                  {updateStatus === 'idle' && (
+                    <button
+                      onClick={handleCheckForUpdates}
+                      className="text-[11px] font-medium text-win-accent hover:underline"
+                    >
+                      Check for updates
+                    </button>
+                  )}
+                </div>
+
+                {updateStatus === 'checking' && (
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-win-accent border-t-transparent" />
+                    <span className="text-xs text-win-text-secondary">Checking...</span>
+                  </div>
+                )}
+
+                {updateStatus === 'available' && updateInfo && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-green-400" />
+                      <span className="text-xs text-win-text">
+                        v{updateInfo.version} available
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleDownloadUpdate}
+                      className="w-full rounded border border-win-accent bg-win-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+                    >
+                      Download update
+                    </button>
+                  </div>
+                )}
+
+                {updateStatus === 'downloading' && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-win-text-secondary">Downloading...</span>
+                      <span className="text-xs font-medium text-win-text">{downloadPercent}%</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-win-border overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-win-accent transition-all duration-300"
+                        style={{ width: `${downloadPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {updateStatus === 'ready' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-green-400" />
+                      <span className="text-xs text-win-text">
+                        v{updateInfo?.version} ready to install
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleInstallUpdate}
+                      className="w-full rounded border border-win-accent bg-win-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+                    >
+                      Restart and install
+                    </button>
+                    <p className="text-[10px] text-win-text-tertiary">
+                      The app will restart to apply the update
+                    </p>
+                  </div>
+                )}
+
+                {updateStatus === 'error' && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-red-400" />
+                      <span className="text-xs text-win-text-secondary">
+                        {updateError || 'Update check failed'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleCheckForUpdates}
+                      className="text-[11px] font-medium text-win-accent hover:underline"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <p className="text-xs text-win-text-tertiary">Repository</p>
                 <a

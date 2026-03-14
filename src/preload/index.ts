@@ -93,6 +93,31 @@ const api: IElectronAPI = {
     return () => ipcRenderer.removeListener('clipboard:paste', listener)
   },
 
+  // Updater
+  updaterCheck: () => ipcRenderer.invoke('updater:check'),
+  updaterDownload: () => ipcRenderer.invoke('updater:download'),
+  updaterInstall: () => ipcRenderer.invoke('updater:install'),
+  onUpdateAvailable: (callback) => {
+    const listener = (_event: Electron.IpcRendererEvent, info: { version: string; releaseDate: string; releaseNotes: string }) => callback(info)
+    ipcRenderer.on('updater:update-available', listener)
+    return () => ipcRenderer.removeListener('updater:update-available', listener)
+  },
+  onUpdateDownloaded: (callback) => {
+    const listener = (_event: Electron.IpcRendererEvent, info: { version: string }) => callback(info)
+    ipcRenderer.on('updater:update-downloaded', listener)
+    return () => ipcRenderer.removeListener('updater:update-downloaded', listener)
+  },
+  onUpdateProgress: (callback) => {
+    const listener = (_event: Electron.IpcRendererEvent, progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => callback(progress)
+    ipcRenderer.on('updater:download-progress', listener)
+    return () => ipcRenderer.removeListener('updater:download-progress', listener)
+  },
+  onUpdateError: (callback) => {
+    const listener = (_event: Electron.IpcRendererEvent, error: { message: string }) => callback(error)
+    ipcRenderer.on('updater:error', listener)
+    return () => ipcRenderer.removeListener('updater:error', listener)
+  },
+
   // Window controls
   windowMinimize: () => ipcRenderer.send('window:minimize'),
   windowMaximize: () => ipcRenderer.send('window:maximize'),

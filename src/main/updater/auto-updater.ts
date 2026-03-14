@@ -35,6 +35,17 @@ export function initAutoUpdater(
     events?.onUpdateNotAvailable?.(info)
   })
 
+  autoUpdater.on('download-progress', (progress) => {
+    if (!mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('updater:download-progress', {
+        percent: progress.percent,
+        bytesPerSecond: progress.bytesPerSecond,
+        transferred: progress.transferred,
+        total: progress.total
+      })
+    }
+  })
+
   autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
     if (!mainWindow.isDestroyed()) {
       mainWindow.webContents.send('updater:update-downloaded', {
@@ -46,6 +57,9 @@ export function initAutoUpdater(
 
   autoUpdater.on('error', (error: Error) => {
     console.error('Auto-updater error:', error.message)
+    if (!mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('updater:error', { message: error.message })
+    }
     events?.onUpdateError?.(error)
   })
 }

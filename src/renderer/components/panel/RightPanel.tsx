@@ -5,6 +5,7 @@ import AgentList from './AgentList'
 import SkillList from './SkillList'
 import MCPPanel from './MCPPanel'
 import GitPanel from '@/components/git/GitPanel'
+import CanvasPanel from './CanvasPanel'
 
 const TABS: { id: RightPanelTab; label: string; icon: ReactNode }[] = [
   {
@@ -62,6 +63,17 @@ const TABS: { id: RightPanelTab; label: string; icon: ReactNode }[] = [
         <path d="M6 9v12" />
       </svg>
     )
+  },
+  {
+    id: 'canvas',
+    label: 'Canvas',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z" />
+        <path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7" />
+        <path d="M14.5 17.5 4.5 15" />
+      </svg>
+    )
   }
 ]
 
@@ -69,6 +81,8 @@ export default function RightPanel() {
   const panelWidth = useSettingsStore((s) => s.rightPanelWidth)
   const activeTab = useSettingsStore((s) => s.rightPanelActiveTab)
   const setActiveTab = useSettingsStore((s) => s.setRightPanelActiveTab)
+  const canvasMode = useSettingsStore((s) => s.canvasMode)
+  const setCanvasMode = useSettingsStore((s) => s.setCanvasMode)
 
   return (
     <aside
@@ -104,6 +118,27 @@ export default function RightPanel() {
           {activeTab === 'skills' && <SkillList />}
           {activeTab === 'mcps' && <MCPPanel />}
           {activeTab === 'git' && <GitPanel />}
+          {activeTab === 'canvas' && canvasMode === 'panel' && <CanvasPanel mode="panel" />}
+          {activeTab === 'canvas' && canvasMode !== 'panel' && (
+            <div className="flex flex-col items-center gap-3 p-6 text-center">
+              <p className="text-sm text-win-text-secondary">
+                Canvas is in {canvasMode === 'full' ? 'full window' : 'bottom split'} mode.
+              </p>
+              <button
+                onClick={() => {
+                  setCanvasMode('panel')
+                  setActiveTab('canvas')
+                }}
+                className="flex items-center gap-1.5 rounded-md border border-win-border bg-win-card px-3 py-1.5 text-xs font-medium text-win-text-secondary hover:bg-win-accent hover:text-white hover:border-win-accent transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <line x1="9" y1="3" x2="9" y2="21" />
+                </svg>
+                Move to panel
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </aside>

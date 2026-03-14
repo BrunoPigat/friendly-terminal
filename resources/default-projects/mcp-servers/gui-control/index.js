@@ -16,10 +16,21 @@ const {
   CallToolRequestSchema,
   ListToolsRequestSchema
 } = require('@modelcontextprotocol/sdk/types.js')
-const { readFileSync } = require('fs')
+const { readFileSync, writeFileSync } = require('fs')
+const { join } = require('path')
 const { WebSocket } = require('ws')
 
-const VALID_TABS = ['tips', 'agents', 'skills', 'mcps']
+const VALID_TABS = ['tips', 'agents', 'skills', 'mcps', 'canvas']
+const VALID_CANVAS_MODES = ['panel', 'full', 'bottom']
+
+const MAX_HTML_SIZE = 1024 * 1024 // 1MB
+
+/**
+ * Returns the project path from env var or falls back to cwd.
+ */
+function getProjectPath() {
+  return process.env.YFT_PROJECT_PATH || process.cwd()
+}
 
 /**
  * Sends an action to the GUI server via WebSocket and waits for a response.
@@ -139,6 +150,35 @@ async function main() {
           }
         },
         {
+          name: 'render_ui',
+          description:
+            'Build a project insight interface beside the terminal. Write a self-contained HTML document (inline CSS/JS) following Windows 11 light-theme design (light backgrounds, Segoe UI, subtle borders). The UI can read project files at runtime via window.yft.readFile(path) and yft.readDir(path). Use mode "full" (replaces sidebar + right panel, primary), "bottom" (below terminal), or "panel" (right sidebar tab). Do NOT call this on every response — only when the user asks or an important insight warrants it. Max 1MB.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              html: {
+                type: 'string',
+                description: 'Complete HTML document (<!DOCTYPE html>...) to render'
+              },
+              mode: {
+                type: 'string',
+                enum: VALID_CANVAS_MODES,
+                description: 'Layout mode: "panel" (Canvas tab in right panel, default), "full" (full-window overlay), "bottom" (horizontal split below terminal)'
+              }
+            },
+            required: ['html']
+          }
+        },
+        {
+          name: 'get_ui',
+          description:
+            'Read the current canvas.html content from the project. Returns the HTML string or an error if the file does not exist. Use this before calling render_ui to make incremental updates.',
+          inputSchema: {
+            type: 'object',
+            properties: {}
+          }
+        },
+        {
           name: 'add_connection',
           description:
             'Add a new MCP connection to the current project in Your Friendly Terminal. Supports SSE/remote (proxied via mcp-remote) and stdio/local connections. After adding, the Connections tab is auto-selected and the list refreshes.',
@@ -173,6 +213,26 @@ async function main() {
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params
+
+    // get_ui is a pure file read — no WebSocket needed
+    if (name === 'get_ui') {
+      try {
+        const canvasPath = join(getProjectPath(), 'canvas.html')
+        const content = readFileSync(canvasPath, 'utf-8')
+        return { content: [{ type: 'text', text: content }] }
+      } catch (err) {
+        if (err.code === 'ENOENT') {
+          return {
+            content: [{ type: 'text', text: 'No canvas.html found in the project. Use render_ui to create one.' }],
+            isError: true
+          }
+        }
+        return {
+          content: [{ type: 'text', text: `Error reading canvas.html: ${err.message}` }],
+          isError: true
+        }
+      }
+    }
 
     let port
     try {
@@ -215,6 +275,45 @@ async function main() {
       case 'close_panel':
         action = { action: 'close_panel' }
         break
+
+      case 'render_ui': {
+        const html = args?.html
+        const mode = args?.mode || 'panel'
+        if (!html || typeof html !== 'string') {
+          return {
+            content: [{ type: 'text', text: 'Error: "html" is required and must be a string' }],
+            isError: true
+          }
+        }
+        if (html.length > MAX_HTML_SIZE) {
+          return {
+            content: [{ type: 'text', text: `Error: HTML exceeds maximum size of 1MB (got ${(html.length / 1024 / 1024).toFixed(2)}MB)` }],
+            isError: true
+          }
+        }
+        if (!VALID_CANVAS_MODES.includes(mode)) {
+          return {
+            content: [{ type: 'text', text: `Error: Invalid mode "${mode}". Must be one of: ${VALID_CANVAS_MODES.join(', ')}` }],
+            isError: true
+          }
+        }
+        try {
+          const canvasPath = join(getProjectPath(), 'canvas.html')
+          writeFileSync(canvasPath, html, 'utf-8')
+        } catch (err) {
+          return {
+            content: [{ type: 'text', text: `Error writing canvas.html: ${err.message}` }],
+            isError: true
+          }
+        }
+        // Set canvas mode and show canvas
+        if (mode === 'panel') {
+          action = { action: 'switch_tab', tab: 'canvas' }
+        } else {
+          action = { action: 'set_canvas_mode', mode }
+        }
+        break
+      }
 
       case 'add_connection': {
         const connName = args?.name

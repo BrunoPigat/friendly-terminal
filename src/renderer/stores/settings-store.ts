@@ -5,7 +5,8 @@ import { DEFAULT_SIDEBAR_WIDTH } from '@/lib/constants'
 import { DEFAULT_THEME_ID, resolveTerminalTheme } from '@/lib/terminal-themes'
 import * as api from '@/lib/api'
 
-export type RightPanelTab = 'tips' | 'agents' | 'skills' | 'mcps' | 'git'
+export type RightPanelTab = 'tips' | 'agents' | 'skills' | 'mcps' | 'git' | 'canvas'
+export type CanvasMode = 'panel' | 'full' | 'bottom'
 
 interface SettingsState {
   defaultEngine: EngineId
@@ -13,6 +14,9 @@ interface SettingsState {
   sidebarCollapsed: boolean
   rightPanelWidth: number
   rightPanelActiveTab: RightPanelTab
+  canvasMode: CanvasMode
+  canvasFullWidth: number
+  canvasBottomHeight: number
   minifiedView: boolean
   showSettingsDialog: boolean
   terminalTheme: string
@@ -25,6 +29,9 @@ interface SettingsState {
   toggleSidebar: () => void
   setRightPanelWidth: (width: number) => void
   setRightPanelActiveTab: (tab: RightPanelTab) => void
+  setCanvasMode: (mode: CanvasMode) => void
+  setCanvasFullWidth: (width: number) => void
+  setCanvasBottomHeight: (height: number) => void
   toggleMinifiedView: () => void
   setShowSettingsDialog: (show: boolean) => void
   getResolvedTheme: () => ITheme
@@ -45,6 +52,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   sidebarCollapsed: false,
   rightPanelWidth: 400,
   rightPanelActiveTab: 'tips',
+  canvasMode: 'panel',
+  canvasFullWidth: 600,
+  canvasBottomHeight: 300,
   minifiedView: false,
   showSettingsDialog: false,
   terminalTheme: DEFAULT_THEME_ID,
@@ -99,6 +109,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setRightPanelActiveTab: (tab) => {
     set({ rightPanelActiveTab: tab })
+  },
+
+  setCanvasMode: (mode) => {
+    set({ canvasMode: mode })
+  },
+
+  setCanvasFullWidth: (width) => {
+    set({ canvasFullWidth: width })
+  },
+
+  setCanvasBottomHeight: (height) => {
+    set({ canvasBottomHeight: height })
   },
 
   setShowSettingsDialog: (show) => {

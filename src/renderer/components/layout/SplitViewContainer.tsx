@@ -10,12 +10,17 @@ import FileBrowser from '@/components/sidebar/FileBrowser'
 import TerminalToolbar from '@/components/terminal/TerminalToolbar'
 import TerminalGrid from '@/components/terminal/TerminalGrid'
 import RightPanel from '@/components/panel/RightPanel'
+import CanvasPanel from '@/components/panel/CanvasPanel'
 import SettingsDialog from '@/components/settings/SettingsDialog'
 import CompactProjectPanel from './CompactProjectPanel'
 import PanelDivider from './PanelDivider'
 
 const RIGHT_PANEL_MIN_WIDTH = 200
 const RIGHT_PANEL_MAX_WIDTH = 500
+const CANVAS_FULL_MIN_WIDTH = 300
+const CANVAS_FULL_MAX_WIDTH = 1200
+const CANVAS_BOTTOM_MIN_HEIGHT = 100
+const CANVAS_BOTTOM_MAX_HEIGHT = 600
 const DIVIDER_WIDTH = 6 // matches w-1.5
 
 /**
@@ -33,6 +38,11 @@ export default function SplitViewContainer() {
   const minifiedView = useSettingsStore((s) => s.minifiedView)
   const toggleMinifiedView = useSettingsStore((s) => s.toggleMinifiedView)
   const setRightPanelWidth = useSettingsStore((s) => s.setRightPanelWidth)
+  const canvasMode = useSettingsStore((s) => s.canvasMode)
+  const canvasFullWidth = useSettingsStore((s) => s.canvasFullWidth)
+  const setCanvasFullWidth = useSettingsStore((s) => s.setCanvasFullWidth)
+  const canvasBottomHeight = useSettingsStore((s) => s.canvasBottomHeight)
+  const setCanvasBottomHeight = useSettingsStore((s) => s.setCanvasBottomHeight)
 
   const activeTerminalId = useTerminalStore((s) => s.activeTerminalId)
   const terminals = useTerminalStore((s) => s.terminals)
@@ -54,6 +64,8 @@ export default function SplitViewContainer() {
   // Auto-minify the active panel if remaining space is too narrow for full UI
   const activePanelAutoMinified = hasCompactPanels && (window.innerWidth - compactTotalWidth) < MIN_ACTIVE_FULL_WIDTH
   const effectiveMinified = minifiedView || activePanelAutoMinified
+  // Full canvas mode hides sidebar to give max space to terminal + canvas
+  const hideSidebar = effectiveMinified || canvasMode === 'full'
 
   // Active panel and its assigned color
   const activePanel = panels.length > 0 ? panels[panels.length - 1] : undefined
@@ -137,8 +149,66 @@ export default function SplitViewContainer() {
     [setRightPanelWidth]
   )
 
+  // Canvas bottom panel resize
+  const canvasResizing = useRef(false)
+  const handleCanvasResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      canvasResizing.current = true
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        if (!canvasResizing.current) return
+        const newHeight = Math.min(
+          CANVAS_BOTTOM_MAX_HEIGHT,
+          Math.max(CANVAS_BOTTOM_MIN_HEIGHT, window.innerHeight - moveEvent.clientY)
+        )
+        setCanvasBottomHeight(newHeight)
+      }
+      const onMouseUp = () => {
+        canvasResizing.current = false
+        document.removeEventListener('mousemove', onMouseMove)
+        document.removeEventListener('mouseup', onMouseUp)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+      }
+      document.body.style.cursor = 'row-resize'
+      document.body.style.userSelect = 'none'
+      document.addEventListener('mousemove', onMouseMove)
+      document.addEventListener('mouseup', onMouseUp)
+    },
+    [setCanvasBottomHeight]
+  )
+
+  // Canvas full-mode side panel resize
+  const canvasFullResizing = useRef(false)
+  const handleCanvasFullResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      canvasFullResizing.current = true
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        if (!canvasFullResizing.current) return
+        const newWidth = Math.min(
+          CANVAS_FULL_MAX_WIDTH,
+          Math.max(CANVAS_FULL_MIN_WIDTH, window.innerWidth - moveEvent.clientX)
+        )
+        setCanvasFullWidth(newWidth)
+      }
+      const onMouseUp = () => {
+        canvasFullResizing.current = false
+        document.removeEventListener('mousemove', onMouseMove)
+        document.removeEventListener('mouseup', onMouseUp)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+      }
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+      document.addEventListener('mousemove', onMouseMove)
+      document.addEventListener('mouseup', onMouseUp)
+    },
+    [setCanvasFullWidth]
+  )
+
   return (
-    <div ref={containerRef} className="flex flex-1 overflow-hidden">
+    <div ref={containerRef} className="relative flex flex-1 overflow-hidden">
       {/* Compact panels (non-active) — fixed mobile width */}
       {compactPanels.map((panel) => (
         <div key={panel.panelId} className="contents">
@@ -189,15 +259,15 @@ export default function SplitViewContainer() {
 
         {/* Rest of the active panel UI */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          {!effectiveMinified && (
+          {/* Sidebar — hidden in minified view and full canvas mode */}
+          {!hideSidebar && (
             <Sidebar>
               <FileBrowser />
             </Sidebar>
           )}
 
           {/* Resize handle */}
-          {!effectiveMinified && !sidebarCollapsed && (
+          {!hideSidebar && !sidebarCollapsed && (
             <div
               className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
               onMouseDown={handleResizeStart}
@@ -227,18 +297,50 @@ export default function SplitViewContainer() {
               <TerminalToolbar />
             )}
             <TerminalGrid />
+
+            {/* Canvas bottom split */}
+            {canvasMode === 'bottom' && (
+              <>
+                <div
+                  className="h-1 shrink-0 cursor-row-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
+                  onMouseDown={handleCanvasResizeStart}
+                />
+                <div
+                  className="shrink-0 border-t border-win-border overflow-hidden"
+                  style={{ height: canvasBottomHeight }}
+                >
+                  <CanvasPanel mode="bottom" />
+                </div>
+              </>
+            )}
           </main>
 
-          {/* Right panel resize handle */}
-          {!effectiveMinified && (
+          {/* Right panel resize handle — hidden in full canvas mode */}
+          {!effectiveMinified && canvasMode !== 'full' && (
             <div
               className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
               onMouseDown={handleRightResizeStart}
             />
           )}
 
-          {/* Right panel */}
-          {!effectiveMinified && <RightPanel />}
+          {/* Right panel — replaced by canvas in full mode */}
+          {!effectiveMinified && canvasMode !== 'full' && <RightPanel />}
+
+          {/* Full canvas mode — replaces sidebar + right panel, sits beside terminal */}
+          {canvasMode === 'full' && (
+            <>
+              <div
+                className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-win-accent/20 active:bg-win-accent/40 transition-colors"
+                onMouseDown={handleCanvasFullResizeStart}
+              />
+              <aside
+                className="relative flex shrink-0 flex-col border-l border-win-border bg-win-bg overflow-hidden"
+                style={{ width: canvasFullWidth }}
+              >
+                <CanvasPanel mode="full" />
+              </aside>
+            </>
+          )}
         </div>
       </div>
 
