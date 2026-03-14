@@ -3,6 +3,7 @@ import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import ProjectDialog from '@/components/project/ProjectDialog'
 import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
+import { getProjectsDir, shellOpenPath } from '@/lib/api'
 
 /**
  * Dropdown for switching between projects.
@@ -124,11 +125,11 @@ export default function ProjectSwitcher() {
             )}
           </div>
 
-          {/* Create new */}
-          <div className="border-t border-win-border">
+          {/* Create new + Open folder */}
+          <div className="border-t border-win-border flex">
             <button
               onClick={handleCreateNew}
-              className="flex w-full items-center gap-1.5 px-3 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-accent transition-colors"
+              className="flex flex-1 items-center gap-1.5 px-3 py-2 text-sm text-win-text-secondary hover:bg-win-hover hover:text-win-accent transition-colors"
             >
               <svg
                 width="12"
@@ -142,6 +143,17 @@ export default function ProjectSwitcher() {
                 <line x1="2" y1="6" x2="10" y2="6" />
               </svg>
               New Project
+            </button>
+            <button
+              onClick={async () => { const dir = await getProjectsDir(); shellOpenPath(dir) }}
+              title="Open projects folder"
+              className="flex items-center justify-center px-2.5 py-2 text-win-text-tertiary hover:bg-win-hover hover:text-win-accent transition-colors border-l border-win-border"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
             </button>
           </div>
         </div>

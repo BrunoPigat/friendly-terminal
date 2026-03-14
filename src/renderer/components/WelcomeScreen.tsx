@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import { APP_NAME } from '@/lib/constants'
-import { showOpenDirectory } from '@/lib/api'
+import { showOpenDirectory, getProjectsDir, shellOpenPath } from '@/lib/api'
 import DeleteProjectDialog from '@/components/project/DeleteProjectDialog'
 import SetupBanner from '@/components/SetupBanner'
 import HelpDialog from '@/components/HelpDialog'
@@ -222,6 +222,17 @@ export default function WelcomeScreen() {
                 <polyline points="9 10 12 7 15 10" />
               </svg>
               {importing ? 'Importing...' : 'Import Folder'}
+            </button>
+            <button
+              onClick={async () => { const dir = await getProjectsDir(); shellOpenPath(dir) }}
+              title="Open projects folder"
+              className="flex items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-win-border-strong px-5 py-5 text-base font-medium text-win-text-secondary hover:border-win-accent hover:text-win-accent hover:bg-win-accent-subtle transition-all"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
             </button>
           </div>
         )}
